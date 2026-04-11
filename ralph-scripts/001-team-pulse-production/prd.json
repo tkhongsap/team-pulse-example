@@ -21,7 +21,7 @@
         "Typecheck passes"
       ],
       "priority": 1,
-      "passes": false,
+      "passes": true,
       "notes": "Reference: .claude/commands/compile-wiki.md for the prompt logic. The script wraps the same prompt in an Agent SDK call."
     },
     {
@@ -41,7 +41,7 @@
         "Typecheck passes"
       ],
       "priority": 2,
-      "passes": false,
+      "passes": true,
       "notes": "Reference: .claude/commands/morning-briefing.md, eod-summary.md, team-dashboard.md for prompt logic."
     },
     {
@@ -60,7 +60,7 @@
         "Typecheck passes"
       ],
       "priority": 3,
-      "passes": false,
+      "passes": true,
       "notes": "Depends on US-001 and US-002. This is the single entry point for cron."
     },
     {
@@ -77,7 +77,7 @@
         "Typecheck passes"
       ],
       "priority": 4,
-      "passes": false,
+      "passes": true,
       "notes": "7AM Bangkok = 00:00 UTC, 6PM Bangkok = 11:00 UTC."
     },
     {
@@ -96,7 +96,7 @@
         "Typecheck passes"
       ],
       "priority": 5,
-      "passes": false,
+      "passes": true,
       "notes": "See docs/frontend-design.md for full design spec. Use App Router, not Pages Router."
     },
     {
@@ -117,7 +117,7 @@
         "Verify in browser using dev-browser skill"
       ],
       "priority": 6,
-      "passes": false,
+      "passes": true,
       "notes": "See docs/frontend-design.md section 1 (Sidebar) and section 2 (Header). Use shadcn/ui Sheet for mobile sidebar."
     },
     {
@@ -135,7 +135,7 @@
         "Verify in browser: navigate to /reports/2026-04-11/morning-briefing, confirm tables render"
       ],
       "priority": 7,
-      "passes": false,
+      "passes": true,
       "notes": "Use react-markdown with remark-gfm plugin. The wiki/reports/ files are standard markdown."
     },
     {
@@ -152,7 +152,7 @@
         "Verify in browser: navigate to /wiki/contributors/garrytan, confirm wikilinks work"
       ],
       "priority": 8,
-      "passes": false,
+      "passes": true,
       "notes": "Parse [[contributors/garrytan]] into links to /wiki/contributors/garrytan. Use regex to find wikilinks in markdown."
     },
     {
@@ -171,7 +171,7 @@
         "Verify in browser: type a message, confirm it appears in the chat area"
       ],
       "priority": 9,
-      "passes": false,
+      "passes": true,
       "notes": "This story builds the UI only. The Agent SDK backend (streaming) is US-010."
     },
     {
@@ -190,7 +190,7 @@
         "Verify in browser: ask 'Who is busiest today?', confirm streaming response with wiki content"
       ],
       "priority": 10,
-      "passes": false,
+      "passes": true,
       "notes": "Depends on US-009 (chat UI). The Agent SDK runs in the Next.js API route. Stream using ReadableStream or EventSource."
     },
     {
@@ -206,7 +206,7 @@
         "Verify in browser: ask a question, confirm source chips appear and navigate correctly"
       ],
       "priority": 11,
-      "passes": false,
+      "passes": true,
       "notes": "Parse Agent SDK tool_use messages to identify which files were Read. Display as citations."
     },
     {
@@ -223,7 +223,7 @@
         "Verify in browser: load /, confirm 4 cards visible, click one, confirm chat starts"
       ],
       "priority": 12,
-      "passes": false,
+      "passes": true,
       "notes": "See docs/frontend-design.md section 6 (Suggested Questions)."
     },
     {
@@ -240,7 +240,7 @@
         "Verify in browser: toggle dark mode, confirm all areas switch correctly"
       ],
       "priority": 13,
-      "passes": false,
+      "passes": true,
       "notes": "Use next-themes or Tailwind dark: class strategy. See docs/frontend-design.md section 4."
     },
     {
@@ -259,7 +259,7 @@
         "Verify in browser: access / while logged out, confirm redirect to login page"
       ],
       "priority": 14,
-      "passes": false,
+      "passes": true,
       "notes": "Use NextAuth.js v4+ with the GitHub provider. Session stored in JWT."
     },
     {
@@ -276,7 +276,7 @@
         "Verify in browser: resize to 375px width, confirm sidebar hidden and chat usable"
       ],
       "priority": 15,
-      "passes": false,
+      "passes": true,
       "notes": "Use Tailwind responsive breakpoints (md:, lg:). shadcn/ui Sheet component for mobile sidebar overlay."
     },
     {
@@ -292,7 +292,7 @@
         "Typecheck passes"
       ],
       "priority": 16,
-      "passes": false,
+      "passes": true,
       "notes": "Simple in-memory counter per user is fine for v1. Persistent storage (Redis/DB) for production later."
     }
   ]

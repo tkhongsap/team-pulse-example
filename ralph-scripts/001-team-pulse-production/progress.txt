@@ -1,3 +1,97 @@
 # Ralph Progress Log
 Started: 2026-04-11
+
+## Codebase Patterns
+- **Python scripts:** Use `python3` (not `python`). All scripts in `scripts/` dir.
+- **Agent SDK pattern:** `query()` + `ClaudeAgentOptions(setting_sources=["project"], permission_mode="bypassPermissions", cwd=PROJECT_ROOT)`
+- **Typecheck:** `mypy scripts/*.py --ignore-missing-imports` for Python; `cd web && npm run build` for TypeScript
+- **Env loading:** All Python scripts use `load_dotenv(PROJECT_ROOT / ".env")` at startup
+- **Web app:** Next.js 14+ App Router in `web/`, Tailwind v4 + shadcn/ui, Inter + JetBrains Mono fonts
+- **Tailwind v4:** No `tailwind.config.ts`. Config via `@theme inline` in `globals.css`. Font vars: `--font-inter`, `--font-jetbrains-mono`
+- **shadcn/ui:** Components in `web/src/components/ui/`. Installed: Button, Card, Input, Badge, Sheet
+- **Wiki data path:** Raw files in `raw/github-daily/`, wiki articles in `wiki/`, reports in `wiki/reports/`
+---
+
+## 2026-04-11 - US-001
+- Implemented `scripts/compile.py` — Agent SDK compile script for wiki compilation
+- Files changed: `scripts/compile.py` (new)
+- **Learnings for future iterations:**
+  - `claude_agent_sdk.query()` returns `ResultMessage` with `total_cost_usd` and `result` fields
+  - `ClaudeAgentOptions` supports `setting_sources=["project"]` to auto-load CLAUDE.md
+  - `permission_mode="bypassPermissions"` needed for unattended script execution
+  - `wiki/log.md` bootstrap entry uses "through" range syntax — need regex to expand date ranges
+  - All 3 deps installed: `claude-agent-sdk==0.1.37`, `python-dotenv==1.2.1`, `anthropic==0.83.0`
+  - `python` command not found on this system — use `python3`
+  - mypy typecheck: `mypy scripts/compile.py --ignore-missing-imports`
+---
+
+## 2026-04-11 - US-002
+- Implemented `scripts/generate_report.py` — Agent SDK report generation with --type morning|eod|dashboard and --date flags
+- Files changed: `scripts/generate_report.py` (new)
+- **Learnings for future iterations:**
+  - Three distinct prompt templates needed: morning briefing, EOD summary, team dashboard
+  - Each report type references different sections of `docs/wt-project.md`
+  - Dashboard needs 7-day lookback for trend analysis — calculate date range dynamically
+  - Same SDK pattern as compile.py: `query()` + `ClaudeAgentOptions` + `ResultMessage` for cost
+  - `max_turns=30` sufficient for report generation (less than compile's 50)
+---
+
+## 2026-04-11 - US-003
+- Implemented `scripts/run_pipeline.py` — pipeline orchestrator running extract, compile, report, git push
+- Files changed: `scripts/run_pipeline.py` (new)
+- **Learnings for future iterations:**
+  - Pipeline logs to `scripts/pipeline.log` with Bangkok timestamps
+  - Uses `subprocess.run()` for each step with 600s timeout
+  - Checks wiki/log.md before/after compile to verify update happened
+  - Report naming: morning→morning-briefing, eod→eod-summary, dashboard→team-dashboard
+  - Non-zero exit on any step failure — no partial commits
+  - `sys.executable` resolves to correct python3 for subprocess calls
+---
+
+## 2026-04-11 - US-004
+- Created `.env.example` with ANTHROPIC_API_KEY, GITHUB_TOKEN, TEAM_PULSE_REPOS, TEAM_PULSE_TIMEZONE
+- Updated `scripts/team_pulse.py` to read TEAM_PULSE_REPOS from env via python-dotenv
+- Created `scripts/crontab.txt` (00:00 UTC AM, 11:00 UTC PM)
+- Created `scripts/setup-cron.sh` with install/remove support
+- Files changed: `.env.example` (new), `scripts/team_pulse.py` (modified), `scripts/crontab.txt` (new), `scripts/setup-cron.sh` (new)
+- **Learnings for future iterations:**
+  - `_get_repos_from_env()` returns None when unset, allowing `or DEFAULT_REPOS` fallback
+  - 7AM Bangkok = 00:00 UTC, 6PM Bangkok = 11:00 UTC
+  - setup-cron.sh removes old entries before adding new ones (idempotent)
+---
+
+## 2026-04-11 - US-005
+- Initialized Next.js 14+ web app in `web/` with App Router, TypeScript, Tailwind CSS
+- Configured shadcn/ui with Button, Card, Input, Badge, Sheet components
+- Set up Inter (body) and JetBrains Mono (code) fonts
+- Root page renders "Team Pulse" placeholder
+- Files changed: `web/` directory (26 files)
+- **Learnings for future iterations:**
+  - `create-next-app` creates its own `.git` — must remove before committing to parent repo
+  - shadcn/ui v4 uses `@import "shadcn/tailwind.css"` in globals.css (no tailwind.config.ts)
+  - Font vars: `--font-inter` for sans, `--font-jetbrains-mono` for mono
+  - Build command: `cd web && npm run build`
+  - Tailwind v4 uses `@theme inline` block in globals.css instead of tailwind.config.ts
+---
+
+## 2026-04-11 - US-006 through US-016
+- US-006: Three-panel layout (sidebar + header + main) with collapsible sections
+- US-007: Markdown report viewer at /reports/[date]/[type] with react-markdown + remark-gfm
+- US-008: Wiki article viewer at /wiki/[...slug] with YAML frontmatter + [[wikilink]] rendering
+- US-009: Chat interface at / with auto-expanding textarea, message display, loading states
+- US-010: Agent SDK streaming backend via ask_server.py + /api/ask SSE proxy
+- US-011: Source citations as clickable chips at bottom of AI responses
+- US-012: 4 suggested question cards (2x2 grid) on empty chat state
+- US-013: Dark/light mode toggle via next-themes (localStorage persistence)
+- US-014: GitHub OAuth via NextAuth.js v4 with middleware-based route protection
+- US-015: Mobile responsive — sidebar overlay below lg, hamburger toggle, fixed chat input
+- US-016: In-memory rate limiting (100/day per user), usage counter in header, 429 on limit
+- **Learnings for future iterations:**
+  - shadcn/ui Button in v4 does NOT support `asChild` prop — wrap with Link instead
+  - Next.js 16 replaced `middleware` with `proxy` convention — must export named `middleware` function
+  - `gray-matter` for YAML frontmatter parsing in wiki articles
+  - Next.js 16 dynamic params: `params` is a Promise that must be awaited
+  - Ask server (Python) streams SSE; Next.js /api/ask proxies the stream via `response.body`
+  - Rate limit uses Bangkok midnight reset — compute date with UTC+7 offset
+  - `next-themes` needs `suppressHydrationWarning` on `<html>` element
 ---
