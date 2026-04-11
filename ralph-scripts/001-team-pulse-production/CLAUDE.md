@@ -66,3 +66,124 @@ If ALL stories are complete and passing, reply with:
 - **Agent SDK reference:** ideas/agent-sdk-reference.md — SDK tools, code examples, costs
 - **PRD details:** docs/prd-team-pulse-production.md — full product requirements
 - **Wiki data:** wiki/ has 11 compiled articles + 9 reports from the PoC
+
+## Claude Agent SDK Reference
+
+**Docs:** https://code.claude.com/docs/en/agent-sdk/overview
+
+**Install:** `pip install claude-agent-sdk`
+
+**Auth:** `export ANTHROPIC_API_KEY=your-api-key`
+
+**Core pattern for Team Pulse scripts:**
+```python
+import asyncio
+from claude_agent_sdk import query, ClaudeAgentOptions
+
+async def main():
+    async for message in query(
+        prompt="Your task description here",
+        options=ClaudeAgentOptions(
+            allowed_tools=["Read", "Write", "Edit", "Glob", "Grep"],
+            setting_sources=["project"],  # auto-loads CLAUDE.md from repo root
+        ),
+    ):
+        if hasattr(message, "result"):
+            print(message.result)
+
+asyncio.run(main())
+```
+
+**Built-in tools (10):**
+
+| Tool | What it does |
+|------|-------------|
+| Read | Read any file in the working directory |
+| Write | Create new files |
+| Edit | Make precise edits to existing files |
+| Bash | Run terminal commands, scripts, git operations |
+| Monitor | Watch a background script and react to each output line |
+| Glob | Find files by pattern (`**/*.ts`, `src/**/*.py`) |
+| Grep | Search file contents with regex |
+| WebSearch | Search the web for current information |
+| WebFetch | Fetch and parse web page content |
+| AskUserQuestion | Ask the user clarifying questions with multiple choice |
+
+**Key feature — `setting_sources=["project"]`:**
+This makes the Agent SDK automatically read `CLAUDE.md` and `.claude/commands/*.md`
+from the repo root. The agent understands the wiki schema, article format, and all
+operations without repeating them in the prompt. USE THIS FOR ALL SCRIPTS.
+
+**Sessions (conversation memory):**
+```python
+from claude_agent_sdk import query, ClaudeAgentOptions, SystemMessage
+
+session_id = None
+# First query — capture session ID
+async for message in query(prompt="Read the wiki index", options=...):
+    if isinstance(message, SystemMessage) and message.subtype == "init":
+        session_id = message.data["session_id"]
+
+# Resume with full context
+async for message in query(
+    prompt="Now find burnout signals",
+    options=ClaudeAgentOptions(resume=session_id),
+):
+    ...
+```
+
+**Subagents:**
+```python
+from claude_agent_sdk import query, ClaudeAgentOptions, AgentDefinition
+
+async for message in query(
+    prompt="Use the wiki-compiler agent to compile new sources",
+    options=ClaudeAgentOptions(
+        allowed_tools=["Read", "Glob", "Grep", "Agent"],
+        agents={
+            "wiki-compiler": AgentDefinition(
+                description="Compiles raw sources into wiki articles",
+                prompt="Read new raw files, update wiki following CLAUDE.md schema",
+                tools=["Read", "Write", "Edit", "Glob", "Grep"],
+            )
+        },
+    ),
+):
+    ...
+```
+
+**Hooks (audit logging example):**
+```python
+from claude_agent_sdk import query, ClaudeAgentOptions, HookMatcher
+
+async def log_file_change(input_data, tool_use_id, context):
+    file_path = input_data.get("tool_input", {}).get("file_path", "unknown")
+    with open("./audit.log", "a") as f:
+        f.write(f"{datetime.now()}: modified {file_path}\n")
+    return {}
+
+options = ClaudeAgentOptions(
+    hooks={"PostToolUse": [HookMatcher(matcher="Edit|Write", hooks=[log_file_change])]}
+)
+```
+
+**Streaming (for web app /api/ask route):**
+```python
+async for message in query(
+    prompt=user_question,
+    options=ClaudeAgentOptions(
+        allowed_tools=["Read", "Glob", "Grep"],
+        setting_sources=["project"],
+        resume=session_id,  # conversation memory
+    ),
+):
+    # Stream each message to the frontend via SSE
+    yield message
+```
+
+**Cost estimates:**
+| Operation | Cost |
+|-----------|------|
+| Compile wiki | ~$0.30-0.50/run |
+| Generate report | ~$0.10-0.20/report |
+| Q&A query | ~$0.25-0.50/query |
