@@ -40,7 +40,8 @@ If you discover a **reusable pattern** that future iterations should know, add i
 - Do NOT commit broken code
 - Keep changes focused and minimal
 - Follow existing code patterns
-- Quality gate: `PYTHON=.venv/bin/python make test` must pass before committing
+- For Python scripts: `python scripts/team_pulse.py --help` must not error
+- For web app: `cd web && npm run build` must pass (once web/ exists)
 
 ## Stop Condition
 
@@ -56,31 +57,12 @@ If ALL stories are complete and passing, reply with:
 - Keep CI green
 - Read the Codebase Patterns section in progress.txt before starting
 
-## Local Learnings
+## Project Context
 
-- Use `.venv/bin/python` for running tests; the shell may not have a default `python` binary
-- Quality gate: `PYTHON=.venv/bin/python make test` must pass before committing
-- Integration tests: `tests/integration/conftest.py` has autouse auth mock + `client` fixture
-- Use `dataclasses.asdict()` to serialize dataclass reports to JSON-compatible dicts
-- MMM router: `src/platform/api/routers/mmm.py` — register dedicated routes before the generic `/{engine}/{artifact}` catch-all
-- Engine protocol: `src/mmm/engines/base.py` — `MmmEngineProtocol`
-- Engine registry: `src/mmm/engines/registry.py` — `get_engine(name)`, `list_engines()`
-- Validation module: `src/mmm/validation/` — business_sense.py, benchmarks.py, sufficiency.py, diagnostic_interpreter.py, statistical_tests.py
-- EDA module: `src/mmm/eda/` — correlations.py, stationarity.py, multicollinearity.py, distributions.py, spec_recommender.py, visualizations.py
-- EDA router: `src/platform/api/routers/eda.py` — GET/POST endpoints for EDA artifacts
-- Benchmarks: `data/config/benchmarks.json` — top-level metadata object with `benchmarks` array
-- Meridian artifacts: `data/mmm/meridian_results/` — roi.json, decomposition.json, diagnostics.json, evaluation_report.json
-- Pipeline orchestrator: `src/platform/workflow/pipeline.py` — 10-stage pipeline (BRIEF→REPORT)
-- Workflow state: `src/platform/workflow/state_manager.py` — JSON-persisted at data/workflows/
-- Supervisor: `src/platform/agents/supervisor.py` — delegation engine with tier routing
-- Cleaning pipeline: `src/mmm/cleaning/` — time_alignment.py, outlier_detection.py, missing_data.py, normalisation.py, matrix_builder.py
-- Meridian config: `src/mmm/meridian_config.py` — PRIOR_PROFILES, build_prior_distribution(), ADSTOCK_DECAY_RATES
-- Schemas: `src/platform/schemas/` — channels.py (CHANNEL_REGISTRY), sources/ (6 families), validation.py
-- Experiment schemas: `src/platform/schemas/sources/experiments.py` — GeoliftResultsRow, AttributionPathsRow
-- Brand schemas: `src/platform/schemas/sources/brand.py` — BrandTrackingRow
-- RAG retrieval: `src/rag/retrieval/query_engine.py` — keep `search_text()` offline-safe by falling back to BM25-only retrieval when Voyage embeddings are unavailable; integration tests assume local retrieval still works without `VOYAGE_API_KEY`
-- RAG router MODEL summaries: `src/platform/api/agents/rag_router.py` — when live Meridian compatibility artifacts are missing from `data/mmm/meridian_results/`, recover indexed copies from `data/index/bm25/corpus.jsonl` but keep citations anchored to the canonical `data/mmm/meridian_results/...` paths
-- Connector registry tests: `tests/platform/test_connector_registry.py` — reset `ConnectorRegistry._registry`, `_connector_modules`, and `_modules_loaded` in an autouse fixture so decorator registration tests stay deterministic as more connectors are added
-- Connector auth storage: `src/platform/connectors/auth.py` — persist credentials to `data/config/connector_credentials.json` with a shared `{encrypted, payload}` wrapper so Fernet and plaintext modes use the same loader; derive OAuth `expires_at` from `expires_in` when providers omit absolute expiry
-- CSV connector sources: `src/platform/connectors/csv_connector.py` — because `ConnectorProtocol.get_schema()` has no `source` argument, file-backed connectors should accept a constructor source or cache the last `pull_data()` source; normalize schema dtypes to stable labels like `object` and `datetime64[ns]`
-- Connector SDK API tests: `tests/integration/conftest.py` already overrides WorkOS auth, so `/api/connectors/status` coverage can call the real app directly; a temporary `print_performance.csv` fixture plus `validate_dataframe(..., "print_performance")` and `normalise_channel(get_channel("print"))` is the lightest end-to-end pull/validate/clean path
+- **System schema:** Read CLAUDE.md in the repo root — it describes the three-layer architecture (raw/, wiki/, outputs/)
+- **Existing extraction script:** scripts/team_pulse.py — uses `gh` CLI to pull GitHub data
+- **Existing commands:** .claude/commands/*.md — prompt templates for compile, briefing, EOD, dashboard, ask
+- **Frontend design spec:** docs/frontend-design.md — claude.ai-style three-panel layout
+- **Agent SDK reference:** ideas/agent-sdk-reference.md — SDK tools, code examples, costs
+- **PRD details:** docs/prd-team-pulse-production.md — full product requirements
+- **Wiki data:** wiki/ has 11 compiled articles + 9 reports from the PoC

@@ -5,7 +5,7 @@
 set -e
 set -o pipefail
 
-TOOL="codex"
+TOOL="claude"
 MAX_ITERATIONS=30
 CODEX_MODEL="gpt-5.4"
 CODEX_REASONING_EFFORT="xhigh"
