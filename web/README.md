@@ -29,6 +29,30 @@ To learn more about Next.js, take a look at the following resources:
 
 You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
 
+## Testing
+
+### Backend (pytest)
+
+Runs HTTP tests against the real `ask_server.py` on an ephemeral port. Covers health endpoints and request validation.
+
+```bash
+# from the repo root
+pip install -r tests/requirements-dev.txt
+pytest tests/ -v
+```
+
+Set `ANTHROPIC_API_KEY` to also run the optional live integration test.
+
+### Frontend (Playwright)
+
+Runs browser tests against Next.js + a stub ask server (no API key needed).
+
+```bash
+cd web
+npm run test:e2e:install   # one-time Chromium download
+npm run test:e2e           # runs the suite
+```
+
 ## Deploy on Vercel
 
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.

@@ -4,6 +4,7 @@ import { useRef, useEffect, useState } from "react";
 import { MarkdownRenderer } from "./markdown-renderer";
 import { SourceCitations } from "./source-citations";
 import { SuggestedQuestions } from "./suggested-questions";
+import { getAnonymousId } from "@/lib/anonymous-id";
 
 interface Message {
   id: string;
@@ -57,7 +58,10 @@ export function Chat() {
     try {
       const response = await fetch("/api/ask", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "X-Team-Pulse-Id": getAnonymousId(),
+        },
         body: JSON.stringify({ question: trimmed, sessionId }),
       });
 
