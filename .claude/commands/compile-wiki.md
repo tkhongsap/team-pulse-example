@@ -33,6 +33,19 @@ The user's argument is: $ARGUMENTS
 - **Detect patterns across days.** If garrytan had late-night commits on Apr 6, 8, and 11, that's a pattern worth writing about in `wiki/patterns/`.
 - **A single source may touch 10-15 wiki pages.** One daily snapshot affects multiple contributor pages, the project pages, and potentially pattern/connection pages.
 - **Keep articles 200-500 words.** Dense and scannable, not verbose.
+- **Resolution tracking.** When compiling a new day's snapshot:
+  - Compare today's stuck items against the previous day's (from `wiki/patterns/stuck-items-growth.md` or prior raw snapshots)
+  - Items that were stuck yesterday but are now merged/closed = **RESOLVED**
+  - For each resolved item, record: PR/issue number, how many days it was stuck, and date resolved
+  - Update `wiki/patterns/stuck-items-growth.md` with a `## Resolutions` section:
+    ```
+    ## Resolutions
+    | Date | Item | Days Stuck | Resolved By |
+    |------|------|------------|-------------|
+    | 2026-04-12 | gstack#920 | 4 | garrytan (merged) |
+    ```
+  - Track **average time-to-unstick** as a running metric
+  - This directly measures wt-project section 6: "Leads intervene within 24 hours of AI alert"
 
 ## Tone
 
