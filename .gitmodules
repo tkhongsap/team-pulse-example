@@ -4,3 +4,9 @@
 [submodule "gstack"]
 	path = gstack
 	url = https://github.com/garrytan/gstack.git
+[submodule "ralph"]
+	path = ralph
+	url = https://github.com/tkhongsap/ralph.git
+[submodule "claude-memory-compiler"]
+	path = claude-memory-compiler
+	url = https://github.com/coleam00/claude-memory-compiler.git
