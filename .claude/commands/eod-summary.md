@@ -10,10 +10,12 @@ The user's argument is: $ARGUMENTS
 2. Read BOTH snapshot files for the target date:
    - `raw/github-daily/YYYY-MM-DD-am.md` (morning state)
    - `raw/github-daily/YYYY-MM-DD-pm.md` (evening state)
-3. Read the organizational context at `docs/wt-project.md` (sections 4.1 and 4.3).
-4. Compare the two snapshots to identify what changed during the day.
-5. Generate the EOD summary following the structure below.
-6. Save the report to `wiki/reports/YYYY-MM-DD-eod-summary.md`.
+3. Read `wiki/reports/YYYY-MM-DD-morning-briefing.md` if it exists (for cross-referencing morning priorities vs evening outcomes).
+4. Read `wiki/index.md` to find relevant wiki articles for context.
+5. Read the organizational context at `docs/wt-project.md` (sections 4.1 and 4.3).
+6. Compare the two snapshots to identify what changed during the day.
+7. Generate the EOD summary following the structure below.
+8. Save the report to `wiki/reports/YYYY-MM-DD-eod-summary.md`.
 
 If either snapshot is missing, tell the user which file is needed and how to generate it:
 `python scripts/team_pulse.py --period am|pm --date YYYY-MM-DD`
@@ -59,12 +61,26 @@ Narrative summary of the day's accomplishments:
 - Issues resolved
 - New work started (PRs opened)
 
-### 4. What Didn't Get Done
+### 4. Morning vs Evening Cross-Reference (wt-project 4.1)
+
+If the morning briefing exists (`wiki/reports/YYYY-MM-DD-morning-briefing.md`):
+
+For each **Top Priority** from the morning briefing, state what actually happened by evening:
+
+| Morning Priority | Evening Outcome | Status |
+|---|---|---|
+| [Priority from morning briefing] | [What actually happened] | Resolved / Partially Addressed / Unaddressed |
+
+- Flag any **unaddressed P1/P2 items** as carry-over gaps requiring explanation
+- This implements wt-project 4.1: "AI compares reported progress against actual code activity"
+- If morning briefing doesn't exist: note "No morning briefing found for this date — cross-reference skipped"
+
+### 5. What Didn't Get Done
 - Items that were stuck this morning and are STILL stuck tonight
 - PRs that aged another day without review
 - Issues that went unaddressed
 
-### 5. Burnout & Workload Signals (wt-project 4.3)
+### 6. Burnout & Workload Signals (wt-project 4.3)
 Analyze the contributor activity for warning signs:
 - **Late-night commits** (after 10 PM or before 6 AM) — name the people, count the commits
 - **Weekend work** (if applicable) — flag it
@@ -72,7 +88,7 @@ Analyze the contributor activity for warning signs:
 - **Idle** — anyone with zero activity who has assigned issues
 - Recommend specific actions for team lead (e.g., "redistribute X's workload", "check in with Y about blockers")
 
-### 6. Tomorrow's Carry-Over
+### 7. Tomorrow's Carry-Over
 List items that need attention first thing tomorrow morning:
 - Stuck items that persisted through today
 - PRs nearing the stale threshold

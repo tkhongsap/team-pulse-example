@@ -257,6 +257,79 @@ def filter_issues_by_date(issues, date_str):
     return opened_today, closed_today, open_issues
 
 
+def aggregate_workload_by_assignee(repo_data):
+    """Aggregate per-assignee workload from existing repo_data. No extra API calls."""
+    people = {}
+
+    for r in repo_data:
+        # Count assigned open issues per person
+        for issue in r["open_issues"]:
+            for assignee in issue["assignees"]:
+                people.setdefault(assignee, {
+                    "assigned_issues": 0, "open_prs_authored": 0,
+                    "review_requests": 0, "active_today": False,
+                    "max_days_stale": 0,
+                })
+                people[assignee]["assigned_issues"] += 1
+                people[assignee]["max_days_stale"] = max(
+                    people[assignee]["max_days_stale"], issue["days_since_update"]
+                )
+
+        # Count open PRs authored per person
+        for pr in r["open_prs"]:
+            name = pr["author"]
+            people.setdefault(name, {
+                "assigned_issues": 0, "open_prs_authored": 0,
+                "review_requests": 0, "active_today": False,
+                "max_days_stale": 0,
+            })
+            people[name]["open_prs_authored"] += 1
+
+        # Count review requests per person
+        for pr in r["open_prs"]:
+            for reviewer in pr.get("requested_reviewers", []):
+                people.setdefault(reviewer, {
+                    "assigned_issues": 0, "open_prs_authored": 0,
+                    "review_requests": 0, "active_today": False,
+                    "max_days_stale": 0,
+                })
+                people[reviewer]["review_requests"] += 1
+
+        # Detect today's activity from commits, prs_opened, prs_merged
+        for c in r["commits"]:
+            if c["author"] in people:
+                people[c["author"]]["active_today"] = True
+        for p in r["prs_opened"]:
+            if p["author"] in people:
+                people[p["author"]]["active_today"] = True
+        for p in r["prs_merged"]:
+            if p["author"] in people:
+                people[p["author"]]["active_today"] = True
+
+    # Assign status
+    result = []
+    for name, stats in sorted(people.items()):
+        total_load = stats["assigned_issues"] + stats["open_prs_authored"] + stats["review_requests"]
+        if total_load == 0:
+            status = "Idle"
+        elif stats["active_today"]:
+            status = "In Progress"
+        elif stats["assigned_issues"] > 0 and stats["max_days_stale"] >= STUCK_THRESHOLD_DAYS:
+            status = "Stuck"
+        else:
+            status = "Backlog"
+
+        result.append({
+            "assignee": name,
+            "assigned_issues": stats["assigned_issues"],
+            "open_prs_authored": stats["open_prs_authored"],
+            "review_requests": stats["review_requests"],
+            "status": status,
+        })
+
+    return result
+
+
 # ── Helpers ───────────────────────────────────────────────────────────
 
 def _parse_ts(ts_str):
@@ -463,6 +536,22 @@ def generate_report(date_str, period, repo_data, output_dir):
                 assignees = ", ".join(i["assignees"]) or "—"
                 stuck_flag = "**YES**" if i["stuck"] else ""
                 w(f"| {repo_short} | [#{i['number']}]({i['url']}) | {i['author']} | {i['title']} | {assignees} | {i['comments']} | {i['days_since_update']} | {stuck_flag} |")
+    w("")
+
+    # ── Workload by Assignee ──
+    workload = aggregate_workload_by_assignee(repo_data)
+    w("---")
+    w("")
+    w(f"## Workload by Assignee ({len(workload)})")
+    w("")
+    if not workload:
+        w("_No assignee workload data._")
+    else:
+        w("| Assignee | Assigned Issues | Open PRs Authored | Review Requests | Status |")
+        w("|----------|----------------|-------------------|-----------------|--------|")
+        for person in workload:
+            status = f"**{person['status']}**" if person["status"] in ("Stuck", "Idle") else person["status"]
+            w(f"| {person['assignee']} | {person['assigned_issues']} | {person['open_prs_authored']} | {person['review_requests']} | {status} |")
     w("")
 
     # ── Contributor Activity ──
