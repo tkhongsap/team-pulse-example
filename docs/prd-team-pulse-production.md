@@ -73,9 +73,9 @@ Automated pipeline → web dashboard + chat → entire team can use it
 
 - Extraction: Automated (cron)
 - Compilation: Automated (API)
-- Reports: Auto-generated and pushed to Slack
+- Reports: Auto-generated, available on web app
 - Q&A: Web chat interface (like claude.ai)
-- Output: Web dashboard + Slack notifications
+- Output: Web dashboard + chat interface
 - Users: 150+ (team leads, managers, contributors)
 
 ---
@@ -141,7 +141,7 @@ See `ideas/agent-sdk-reference.md` for full SDK documentation and code examples.
 
 ## 3. Phase 1: Automated Backend (No Frontend)
 
-**Goal:** Reports generate automatically. Team leads get morning briefings in Slack without touching any tool.
+**Goal:** Reports generate automatically. Team leads access them on the web app.
 
 **Timeline:** 1-2 weeks
 
@@ -155,13 +155,13 @@ See `ideas/agent-sdk-reference.md` for full SDK documentation and code examples.
 │    1. team_pulse.py --period am    → raw/github-daily/  │
 │    2. compile.py                   → wiki/ updated      │
 │    3. generate_briefing.py         → wiki/reports/      │
-│    4. notify.py                    → Slack webhook       │
+│    4. git commit + push            → web app refreshes   │
 │                                                         │
 │  18:00 Bangkok:                                         │
 │    1. team_pulse.py --period pm    → raw/github-daily/  │
 │    2. compile.py                   → wiki/ updated      │
 │    3. generate_eod.py              → wiki/reports/      │
-│    4. notify.py                    → Slack webhook       │
+│    4. git commit + push            → web app refreshes   │
 │                                                         │
 │  git auto-commit + push after each run                  │
 └────────────────────────────────────────────────────────┘
@@ -183,22 +183,16 @@ See `ideas/agent-sdk-reference.md` for full SDK documentation and code examples.
 - Writes to `wiki/reports/`
 - Cost: ~$0.10-0.20 per report
 
-**`scripts/notify.py`** — Slack/email notification
-- Reads the generated report markdown
-- Converts to Slack blocks or email HTML
-- Sends via Slack webhook or SMTP
-- Cost: free
-
 **`scripts/run_pipeline.py`** — Orchestrator
 - Single entry point: `python scripts/run_pipeline.py --period am`
-- Runs: extract → compile → generate report → notify → git commit + push
+- Runs: extract → compile → generate report → git commit + push
 - Handles errors, logs, retries
+- Web app reads from git — auto-refreshes when new data is pushed
 
 ### Infrastructure
 
 - **Cron:** Linux crontab, GitHub Actions scheduled workflow, or cloud function (AWS Lambda / GCP Cloud Run)
 - **API key:** Anthropic API key stored in `.env`
-- **Slack webhook:** Configured in `.env`
 - **Git:** Auto-commit and push after each pipeline run
 
 ### Cost Estimate (Phase 1)
@@ -213,18 +207,17 @@ See `ideas/agent-sdk-reference.md` for full SDK documentation and code examples.
 
 - [ ] `scripts/compile.py` — wiki compilation via API
 - [ ] `scripts/generate_report.py` — report generation via API
-- [ ] `scripts/notify.py` — Slack/email delivery
 - [ ] `scripts/run_pipeline.py` — orchestrator
 - [ ] Cron configuration (crontab or GitHub Actions)
-- [ ] `.env` template with API key + Slack webhook
-- [ ] Test: run full pipeline end-to-end, verify Slack delivery
+- [ ] `.env` template with API key
+- [ ] Test: run full pipeline end-to-end, verify reports generated
 
 ### wt-project.md Coverage
 
 | Mechanism | How Phase 1 delivers it |
 |---|---|
-| 4.1 Morning check-in | Auto morning briefing in Slack at 7 AM |
-| 4.1 Evening check-out | Auto EOD summary in Slack at 6 PM |
+| 4.1 Morning check-in | Auto morning briefing at 7 AM, available on web app |
+| 4.1 Evening check-out | Auto EOD summary at 6 PM, available on web app |
 | 4.2 Status categorization | Workload table with Backlog/InProgress/Stuck/Idle |
 | 4.3 Burnout detection | Late-night/overload flags in reports |
 | 4.4 Management dashboard | Morning briefing replaces stand-up status checks |
@@ -367,7 +360,7 @@ follow-up questions use full context. Session ID stored in browser.
 | **Extraction** | `team_pulse.py` (Python, gh CLI) | Same |
 | **Compilation** | Agent SDK (Python) | Same |
 | **Reports** | Agent SDK (Python) | Same + web viewer |
-| **Notifications** | Slack webhook, email | Same |
+| **Notifications** | — (web app is the delivery channel) | Same |
 | **Web frontend** | — | Next.js + Tailwind + shadcn/ui |
 | **Chat backend** | — | Agent SDK streaming via API route |
 | **Auth** | — | NextAuth.js (GitHub OAuth) |
@@ -383,11 +376,11 @@ follow-up questions use full context. Session ID stored in browser.
 |---|---|---|
 | `team_pulse.py` (manual) | Cron-automated | Same |
 | `/compile-wiki` (Claude Code) | `scripts/compile.py` (Agent SDK) | Same |
-| `/morning-briefing` (Claude Code) | `scripts/generate_report.py` (Agent SDK) | Web page + Slack |
-| `/eod-summary` (Claude Code) | `scripts/generate_report.py` (Agent SDK) | Web page + Slack |
+| `/morning-briefing` (Claude Code) | `scripts/generate_report.py` (Agent SDK) | Web page |
+| `/eod-summary` (Claude Code) | `scripts/generate_report.py` (Agent SDK) | Web page |
 | `/ask` (Claude Code) | Not available via web | Chat UI + Agent SDK |
-| Terminal only | Terminal + Slack readers | Terminal + Web + Slack |
-| 1 user | 1 user + Slack readers | All users (read + ask) |
+| Terminal only | Terminal + web app | Terminal + web app |
+| 1 user | 1 user + web readers | All users (read + ask) |
 
 **Key principle:** Terminal commands (Claude Code) and web app (Agent SDK) share the
 same backend — CLAUDE.md, .claude/commands/, wiki/, raw/. See Section 0.
@@ -398,7 +391,7 @@ same backend — CLAUDE.md, .claude/commands/, wiki/, raw/. See Section 0.
 
 | Metric | Target | Phase 1 | Phase 2+3 |
 |---|---|---|---|
-| Stand-up meeting time | 50% reduction | Morning briefing in Slack replaces status rounds | Dashboard + chat replaces stand-ups entirely |
+| Stand-up meeting time | 50% reduction | Morning briefing on web app replaces status rounds | Dashboard + chat replaces stand-ups entirely |
 | Stuck task resolution | <24h from alert | Auto-flagged in reports | Visible on dashboard + queryable |
 | Stuck detection speed | Flagged at 3+ days | Automated daily | Same |
 | Employee wellbeing | Reduced burnout | Burnout signals in reports | Burnout dashboard + "who needs help?" queries |
@@ -422,7 +415,7 @@ same backend — CLAUDE.md, .claude/commands/, wiki/, raw/. See Section 0.
 
 1. **Hosting:** Internal server (on-prem) vs cloud (Vercel + API)? Depends on data sensitivity.
 2. **Auth:** GitHub OAuth sufficient, or need company SSO (SAML)?
-3. **Slack vs Teams:** Which messaging platform does the team use?
+3. **Notifications:** Add email/Slack push later if web-only access is insufficient?
 4. **Budget approval:** API costs (~$200-400/month) need sign-off.
 5. **Data retention:** How long to keep daily snapshots? Archive after 90 days?
 
