@@ -11,7 +11,7 @@ The user's argument is: $ARGUMENTS
 3. Read `wiki/index.md` to find relevant wiki articles (contributor profiles, patterns, project history). Read the relevant articles for richer context.
 4. Read the organizational context at `docs/wt-project.md` (sections 4.1 and 4.2).
 4. Generate the morning briefing report following the structure below.
-5. Save the report to `outputs/YYYY-MM-DD-morning-briefing.md`.
+5. Save the report to `wiki/reports/YYYY-MM-DD-morning-briefing.md`.
 
 If the AM snapshot doesn't exist for the requested date, tell the user to run:
 `python scripts/team_pulse.py --period am --date YYYY-MM-DD`

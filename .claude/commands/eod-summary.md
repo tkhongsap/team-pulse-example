@@ -13,7 +13,7 @@ The user's argument is: $ARGUMENTS
 3. Read the organizational context at `docs/wt-project.md` (sections 4.1 and 4.3).
 4. Compare the two snapshots to identify what changed during the day.
 5. Generate the EOD summary following the structure below.
-6. Save the report to `outputs/YYYY-MM-DD-eod-summary.md`.
+6. Save the report to `wiki/reports/YYYY-MM-DD-eod-summary.md`.
 
 If either snapshot is missing, tell the user which file is needed and how to generate it:
 `python scripts/team_pulse.py --period am|pm --date YYYY-MM-DD`

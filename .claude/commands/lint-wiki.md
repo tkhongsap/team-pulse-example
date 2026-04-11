@@ -9,7 +9,7 @@ The user's argument is: $ARGUMENTS
 3. Read `wiki/log.md` to understand what has been compiled.
 4. List all files in `raw/github-daily/` to identify uncompiled sources.
 5. Run the checks below and produce a report.
-6. Save the report to `outputs/YYYY-MM-DD-lint-report.md`.
+6. Save the report to `wiki/reports/YYYY-MM-DD-lint-report.md`.
 
 If the user passes `--fix`, attempt to fix issues that are safe to auto-fix (missing backlinks, sparse index entries). Otherwise, report only.
 

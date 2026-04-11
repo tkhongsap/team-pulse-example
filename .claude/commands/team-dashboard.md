@@ -12,9 +12,9 @@ The user's argument is: $ARGUMENTS
    - `raw/github-daily/YYYY-MM-DD-pm.md` (if available)
 3. For trend analysis, also read the past 7 days of snapshots if they exist in `raw/github-daily/`.
 4. Read the organizational context at `docs/wt-project.md` (sections 4.2, 4.3, 4.4, and 6).
-5. Check `outputs/` for any prior morning briefings or EOD summaries that add context.
+5. Check `wiki/reports/` for any prior morning briefings or EOD summaries that add context.
 6. Generate the dashboard report following the structure below.
-7. Save the report to `outputs/YYYY-MM-DD-team-dashboard.md`.
+7. Save the report to `wiki/reports/YYYY-MM-DD-team-dashboard.md`.
 
 ## Report Structure
 

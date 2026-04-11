@@ -33,11 +33,7 @@ but rarely edit directly.
 - `wiki/projects/` — per-repo/project status and history articles
 - `wiki/patterns/` — recurring signals detected across multiple days
 - `wiki/connections/` — cross-cutting insights linking two or more concepts
-- `wiki/reports/` — filed query outputs (morning briefings, EOD summaries, dashboards)
-
-### 3. Outputs (`outputs/`)
-Point-in-time generated reports. These may also be filed into `wiki/reports/` if
-they contain insights worth preserving.
+- `wiki/reports/` — morning briefings, EOD summaries, dashboards (daily reports live here)
 
 ## Three Operations
 
@@ -87,13 +83,13 @@ updated: 2026-04-11
 ## Data Flow
 
 ```
-raw/github-daily/  →  /compile-wiki  →  wiki/           →  /morning-briefing  →  outputs/
-(immutable)           (LLM ingest)      (index.md,          /eod-summary          (reports)
-                                         contributors/,     /team-dashboard
-                                         projects/,              |
-                                         patterns/)              |
-                          ↑                                      |
-                          └────── notable findings filed back ───┘
+raw/github-daily/  →  /compile-wiki  →  wiki/              →  /morning-briefing   →  wiki/reports/
+(immutable)           (LLM ingest)      (index.md,             /eod-summary           (briefings,
+                                         contributors/,        /team-dashboard          summaries,
+                                         projects/,                 |                    dashboards)
+                                         patterns/)                 |
+                          ↑                                         |
+                          └──── findings feed next compile ─────────┘
 ```
 
 ## Status Categories (from wt-project.md 4.2)
