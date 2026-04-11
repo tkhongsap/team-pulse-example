@@ -8,13 +8,13 @@ The user's argument is: $ARGUMENTS
    - If the user provided a date above (e.g., `2026-04-08`), use that date.
    - If the argument is empty or missing, use today's date.
 2. Read the latest available snapshots for the target date:
-   - `docs/daily/YYYY-MM-DD-am.md`
-   - `docs/daily/YYYY-MM-DD-pm.md` (if available)
-3. For trend analysis, also read the past 7 days of snapshots if they exist in `docs/daily/`.
+   - `raw/github-daily/YYYY-MM-DD-am.md`
+   - `raw/github-daily/YYYY-MM-DD-pm.md` (if available)
+3. For trend analysis, also read the past 7 days of snapshots if they exist in `raw/github-daily/`.
 4. Read the organizational context at `docs/wt-project.md` (sections 4.2, 4.3, 4.4, and 6).
-5. Check `docs/insights/` for any prior morning briefings or EOD summaries that add context.
+5. Check `outputs/` for any prior morning briefings or EOD summaries that add context.
 6. Generate the dashboard report following the structure below.
-7. Save the report to `docs/insights/YYYY-MM-DD-team-dashboard.md`.
+7. Save the report to `outputs/YYYY-MM-DD-team-dashboard.md`.
 
 ## Report Structure
 
@@ -24,7 +24,7 @@ Generate a markdown report with these sections:
 ```
 # Team Dashboard — YYYY-MM-DD
 > Purpose: Management overview for team leads (wt-project 4.4)
-> Data: Daily snapshots from docs/daily/
+> Data: Daily snapshots from raw/github-daily/
 ```
 
 ### 1. Team Health Score

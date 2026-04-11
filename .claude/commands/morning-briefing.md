@@ -7,10 +7,11 @@ The user's argument is: $ARGUMENTS
 1. **Determine the target date:**
    - If the user provided a date above (e.g., `2026-04-08`), use that date.
    - If the argument is empty or missing, use today's date.
-2. Read the AM snapshot file at `docs/daily/YYYY-MM-DD-am.md` (using the target date).
-3. Read the organizational context at `docs/wt-project.md` (sections 4.1 and 4.2).
+2. Read the AM snapshot file at `raw/github-daily/YYYY-MM-DD-am.md` (using the target date).
+3. Read `wiki/index.md` to find relevant wiki articles (contributor profiles, patterns, project history). Read the relevant articles for richer context.
+4. Read the organizational context at `docs/wt-project.md` (sections 4.1 and 4.2).
 4. Generate the morning briefing report following the structure below.
-5. Save the report to `docs/insights/YYYY-MM-DD-morning-briefing.md`.
+5. Save the report to `outputs/YYYY-MM-DD-morning-briefing.md`.
 
 If the AM snapshot doesn't exist for the requested date, tell the user to run:
 `python scripts/team_pulse.py --period am --date YYYY-MM-DD`
@@ -22,7 +23,7 @@ Generate a markdown report with these sections:
 ### Header
 ```
 # Morning Briefing — YYYY-MM-DD
-> Generated from: docs/daily/YYYY-MM-DD-am.md
+> Generated from: raw/github-daily/YYYY-MM-DD-am.md
 > Purpose: What needs attention today (wt-project 4.1 + 4.2)
 ```
 
