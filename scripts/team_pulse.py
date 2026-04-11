@@ -21,16 +21,29 @@ Usage:
 
 import argparse
 import json
+import os
 import subprocess
 import sys
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
-# ── Config ────────────────────────────────────────────────────────────
+from dotenv import load_dotenv
+
+# Load .env from project root
+load_dotenv(Path(__file__).resolve().parent.parent / ".env")
+
+# ── Config ───────────────────────────────────────────────────���────────
 DEFAULT_REPOS = [
     "karpathy/autoresearch",
     "garrytan/gstack",
 ]
+
+def _get_repos_from_env() -> list[str] | None:
+    """Read TEAM_PULSE_REPOS from environment if set."""
+    env_repos = os.environ.get("TEAM_PULSE_REPOS")
+    if env_repos:
+        return [r.strip() for r in env_repos.split(",") if r.strip()]
+    return None
 STUCK_THRESHOLD_DAYS = 3
 OUTPUT_DIR = Path(__file__).resolve().parent.parent / "raw" / "github-daily"
 PER_PAGE = 100  # max items per API page
@@ -641,8 +654,8 @@ def main():
         help="Snapshot period (default: auto-detect from Bangkok time)",
     )
     parser.add_argument(
-        "--repos", nargs="+", default=DEFAULT_REPOS,
-        help="GitHub repos to track (owner/name)",
+        "--repos", nargs="+", default=_get_repos_from_env() or DEFAULT_REPOS,
+        help="GitHub repos to track (owner/name). Reads TEAM_PULSE_REPOS env var if set.",
     )
     parser.add_argument(
         "--output-dir", type=Path, default=OUTPUT_DIR,
