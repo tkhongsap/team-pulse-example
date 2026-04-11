@@ -13,6 +13,7 @@ export function Chat() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [sessionId, setSessionId] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -28,6 +29,12 @@ export function Chat() {
     }
   }, [input]);
 
+  // Restore session from sessionStorage
+  useEffect(() => {
+    const stored = sessionStorage.getItem("teamPulseSessionId");
+    if (stored) setSessionId(stored);
+  }, []);
+
   const sendMessage = async () => {
     const trimmed = input.trim();
     if (!trimmed || isLoading) return;
@@ -42,18 +49,111 @@ export function Chat() {
     setInput("");
     setIsLoading(true);
 
-    // Placeholder response — will be connected to Agent SDK in US-010
-    const assistantMessage: Message = {
-      id: crypto.randomUUID(),
-      role: "assistant",
-      content:
-        "Chat backend is not connected yet. This will be powered by the Agent SDK in a future update.",
-    };
+    const assistantId = crypto.randomUUID();
 
-    setTimeout(() => {
-      setMessages((prev) => [...prev, assistantMessage]);
+    try {
+      const response = await fetch("/api/ask", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ question: trimmed, sessionId }),
+      });
+
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({ error: "Request failed" }));
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: assistantId,
+            role: "assistant",
+            content: `Error: ${err.error || "Request failed"}`,
+          },
+        ]);
+        setIsLoading(false);
+        return;
+      }
+
+      const contentType = response.headers.get("content-type") || "";
+
+      if (contentType.includes("text/event-stream") && response.body) {
+        // SSE streaming
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = "";
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split("\n");
+          buffer = lines.pop() || "";
+
+          let currentEvent = "";
+          for (const line of lines) {
+            if (line.startsWith("event: ")) {
+              currentEvent = line.slice(7);
+            } else if (line.startsWith("data: ")) {
+              const data = line.slice(6);
+              try {
+                const parsed = JSON.parse(data);
+                if (currentEvent === "result" && parsed.text) {
+                  setMessages((prev) => {
+                    const existing = prev.find((m) => m.id === assistantId);
+                    if (existing) {
+                      return prev.map((m) =>
+                        m.id === assistantId
+                          ? { ...m, content: parsed.text }
+                          : m
+                      );
+                    }
+                    return [
+                      ...prev,
+                      {
+                        id: assistantId,
+                        role: "assistant" as const,
+                        content: parsed.text,
+                      },
+                    ];
+                  });
+                  if (parsed.sessionId) {
+                    setSessionId(parsed.sessionId);
+                    sessionStorage.setItem(
+                      "teamPulseSessionId",
+                      parsed.sessionId
+                    );
+                  }
+                }
+              } catch {
+                // Skip invalid JSON
+              }
+            }
+          }
+        }
+      } else {
+        // JSON response (fallback when server not available)
+        const data = await response.json();
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: assistantId,
+            role: "assistant",
+            content: data.error || data.text || "No response",
+          },
+        ]);
+      }
+    } catch {
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: assistantId,
+          role: "assistant",
+          content:
+            "Could not connect to the ask server. Start it with: `python3 scripts/ask_server.py`",
+        },
+      ]);
+    } finally {
       setIsLoading(false);
-    }, 500);
+    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -106,7 +206,7 @@ export function Chat() {
             </div>
           ))}
 
-          {isLoading && (
+          {isLoading && !messages.find((m) => m.role === "assistant" && m.id === messages[messages.length - 1]?.id) && (
             <div>
               <div className="flex items-center gap-2 mb-1">
                 <span className="text-xs font-medium text-muted-foreground">
