@@ -1,0 +1,6 @@
+[submodule "autoresearch"]
+	path = autoresearch
+	url = https://github.com/karpathy/autoresearch.git
+[submodule "gstack"]
+	path = gstack
+	url = https://github.com/garrytan/gstack.git
