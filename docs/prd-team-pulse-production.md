@@ -7,6 +7,45 @@
 
 ---
 
+## 0. Core Design Principle: One Backend, Two Interfaces
+
+```
+┌──────────────────────────────────────────────────────────────────┐
+│                     SHARED BACKEND                                │
+│                                                                   │
+│  raw/github-daily/  →  wiki/  →  wiki/reports/  →  outputs/      │
+│  CLAUDE.md (schema)    index.md    .claude/commands/              │
+│  scripts/              Agent SDK                                  │
+│                                                                   │
+│  Same data. Same wiki. Same prompts. Same behavior.              │
+└────────────────┬──────────────────────────┬──────────────────────┘
+                 │                          │
+    ┌────────────▼────────────┐  ┌─────────▼──────────────────┐
+    │  Terminal (Claude Code)  │  │  Frontend (Web UI)          │
+    │                          │  │                              │
+    │  /morning-briefing       │  │  Dashboard → same report     │
+    │  /eod-summary            │  │  Chat → same /ask logic      │
+    │  /compile-wiki           │  │  Reports → same wiki/reports │
+    │  /ask "question"         │  │                              │
+    │                          │  │  Uses Agent SDK to call      │
+    │  You (developer)         │  │  the same prompts            │
+    └──────────────────────────┘  └──────────────────────────────┘
+```
+
+**The rule:** Every operation that works in the terminal must produce the
+same output when triggered from the web UI. This is enforced by:
+
+1. **Single source of truth:** `CLAUDE.md` defines the schema. Both interfaces read it.
+2. **Same prompts:** `.claude/commands/*.md` define the prompts. The Agent SDK loads
+   them via `setting_sources=["project"]`. The web backend uses the same prompt files.
+3. **Same data layer:** Both read from `raw/` and `wiki/`. Both write to `wiki/` and `outputs/`.
+4. **Same tools:** Claude Code uses Read/Write/Edit/Glob/Grep. Agent SDK uses the same tools.
+
+If you change a command in `.claude/commands/morning-briefing.md`, it takes effect
+in both the terminal AND the web UI — no duplication, no drift.
+
+---
+
 ## 1. Background
 
 We have a working PoC that extracts daily GitHub activity, compiles it into an LLM-maintained wiki, and generates morning briefings, EOD summaries, and ad-hoc Q&A — all running locally via Claude Code in the terminal.
