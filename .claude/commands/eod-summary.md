@@ -8,12 +8,12 @@ The user's argument is: $ARGUMENTS
    - If the user provided a date above (e.g., `2026-04-08`), use that date.
    - If the argument is empty or missing, use today's date.
 2. Read BOTH snapshot files for the target date:
-   - `docs/daily/YYYY-MM-DD-am.md` (morning state)
-   - `docs/daily/YYYY-MM-DD-pm.md` (evening state)
+   - `raw/github-daily/YYYY-MM-DD-am.md` (morning state)
+   - `raw/github-daily/YYYY-MM-DD-pm.md` (evening state)
 3. Read the organizational context at `docs/wt-project.md` (sections 4.1 and 4.3).
 4. Compare the two snapshots to identify what changed during the day.
 5. Generate the EOD summary following the structure below.
-6. Save the report to `docs/insights/YYYY-MM-DD-eod-summary.md`.
+6. Save the report to `outputs/YYYY-MM-DD-eod-summary.md`.
 
 If either snapshot is missing, tell the user which file is needed and how to generate it:
 `python scripts/team_pulse.py --period am|pm --date YYYY-MM-DD`

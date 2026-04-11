@@ -32,7 +32,7 @@ DEFAULT_REPOS = [
     "garrytan/gstack",
 ]
 STUCK_THRESHOLD_DAYS = 3
-OUTPUT_DIR = Path(__file__).resolve().parent.parent / "docs" / "daily"
+OUTPUT_DIR = Path(__file__).resolve().parent.parent / "raw" / "github-daily"
 PER_PAGE = 100  # max items per API page
 
 # Bangkok timezone (ICT = UTC+7)
