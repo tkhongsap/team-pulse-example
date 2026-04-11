@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { AppShell } from "@/components/app-shell";
+import { SessionProvider } from "@/components/session-provider";
 import { ThemeProvider } from "@/components/theme-provider";
 import { getWikiArticles, getReportDates } from "@/lib/wiki";
 
@@ -38,6 +39,7 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <body className="min-h-full font-sans">
+        <SessionProvider>
         <ThemeProvider>
           <AppShell
             contributors={contributors}
@@ -49,6 +51,7 @@ export default function RootLayout({
             {children}
           </AppShell>
         </ThemeProvider>
+        </SessionProvider>
       </body>
     </html>
   );
