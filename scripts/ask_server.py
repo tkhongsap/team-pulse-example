@@ -94,6 +94,9 @@ def create_handler(project_root: str):
                 AssistantMessage,
                 SystemMessage,
                 query,
+                ContentBlock,
+                ToolUseBlock,
+                ToolResultBlock,
             )
 
             options = ClaudeAgentOptions(
@@ -114,6 +117,7 @@ Question: {question}"""
 
             result_text = ""
             new_session_id = None
+            sources_read: list[str] = []
 
             async for message in query(prompt=prompt, options=options):
                 if isinstance(message, SystemMessage):
@@ -124,8 +128,18 @@ Question: {question}"""
                             new_session_id = sid
 
                 if isinstance(message, AssistantMessage):
-                    # Stream partial text if available
-                    pass
+                    # Track Read tool calls for source citations
+                    if hasattr(message, "content"):
+                        for block in getattr(message, "content", []):
+                            if hasattr(block, "name") and block.name == "Read":
+                                file_path = getattr(block, "input", {}).get("file_path", "")
+                                if "wiki/" in file_path and file_path not in sources_read:
+                                    # Extract relative path from wiki/
+                                    wiki_idx = file_path.find("wiki/")
+                                    if wiki_idx >= 0:
+                                        rel = file_path[wiki_idx:]
+                                        if rel not in sources_read:
+                                            sources_read.append(rel)
 
                 if isinstance(message, ResultMessage):
                     result_text = message.result or ""
@@ -136,6 +150,7 @@ Question: {question}"""
                             "text": result_text,
                             "cost": cost,
                             "sessionId": new_session_id,
+                            "sources": sources_read,
                         }),
                     )
 

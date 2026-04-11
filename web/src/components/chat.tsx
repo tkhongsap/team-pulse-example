@@ -2,11 +2,13 @@
 
 import { useRef, useEffect, useState } from "react";
 import { MarkdownRenderer } from "./markdown-renderer";
+import { SourceCitations } from "./source-citations";
 
 interface Message {
   id: string;
   role: "user" | "assistant";
   content: string;
+  sources?: string[];
 }
 
 export function Chat() {
@@ -97,12 +99,13 @@ export function Chat() {
               try {
                 const parsed = JSON.parse(data);
                 if (currentEvent === "result" && parsed.text) {
+                  const sources: string[] = parsed.sources || [];
                   setMessages((prev) => {
                     const existing = prev.find((m) => m.id === assistantId);
                     if (existing) {
                       return prev.map((m) =>
                         m.id === assistantId
-                          ? { ...m, content: parsed.text }
+                          ? { ...m, content: parsed.text, sources }
                           : m
                       );
                     }
@@ -112,6 +115,7 @@ export function Chat() {
                         id: assistantId,
                         role: "assistant" as const,
                         content: parsed.text,
+                        sources,
                       },
                     ];
                   });
@@ -196,7 +200,12 @@ export function Chat() {
                 }`}
               >
                 {message.role === "assistant" ? (
-                  <MarkdownRenderer content={message.content} />
+                  <>
+                    <MarkdownRenderer content={message.content} />
+                    {message.sources && message.sources.length > 0 && (
+                      <SourceCitations sources={message.sources} />
+                    )}
+                  </>
                 ) : (
                   <p className="text-sm whitespace-pre-wrap">
                     {message.content}
