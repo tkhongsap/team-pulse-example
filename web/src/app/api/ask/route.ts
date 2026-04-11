@@ -1,8 +1,31 @@
 import { NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import { checkRateLimit, incrementUsage } from "@/lib/rate-limit";
 
 const ASK_SERVER_URL = process.env.ASK_SERVER_URL || "http://localhost:3001";
 
 export async function POST(request: Request) {
+  // Check authentication
+  const session = await getServerSession(authOptions);
+  if (!session?.user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const userId = (session.user as Record<string, unknown>).id as string || session.user.email || "anonymous";
+
+  // Check rate limit
+  const { allowed, remaining } = checkRateLimit(userId);
+  if (!allowed) {
+    return NextResponse.json(
+      { error: "Daily query limit reached. Resets at midnight Bangkok time." },
+      {
+        status: 429,
+        headers: { "X-RateLimit-Remaining": "0", "X-RateLimit-Limit": "100" },
+      }
+    );
+  }
+
   const body = await request.json();
   const { question, sessionId } = body as {
     question?: string;
@@ -12,6 +35,9 @@ export async function POST(request: Request) {
   if (!question?.trim()) {
     return NextResponse.json({ error: "Missing question" }, { status: 400 });
   }
+
+  // Increment usage before making the request
+  incrementUsage(userId);
 
   try {
     const response = await fetch(`${ASK_SERVER_URL}/ask`, {
@@ -27,12 +53,14 @@ export async function POST(request: Request) {
       );
     }
 
-    // Forward SSE stream
+    // Forward SSE stream with rate limit headers
     return new Response(response.body, {
       headers: {
         "Content-Type": "text/event-stream",
         "Cache-Control": "no-cache",
         Connection: "keep-alive",
+        "X-RateLimit-Remaining": String(remaining - 1),
+        "X-RateLimit-Limit": "100",
       },
     });
   } catch {
