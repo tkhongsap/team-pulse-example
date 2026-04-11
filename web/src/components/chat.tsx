@@ -3,6 +3,7 @@
 import { useRef, useEffect, useState } from "react";
 import { MarkdownRenderer } from "./markdown-renderer";
 import { SourceCitations } from "./source-citations";
+import { SuggestedQuestions } from "./suggested-questions";
 
 interface Message {
   id: string;
@@ -180,6 +181,18 @@ export function Chat() {
               <p className="mt-2 text-muted-foreground">
                 Ask anything about your team
               </p>
+              <SuggestedQuestions
+                onSelect={(question) => {
+                  setInput(question);
+                  // Auto-send after a tick to let state update
+                  setTimeout(() => {
+                    const textarea = textareaRef.current;
+                    if (textarea) {
+                      textarea.focus();
+                    }
+                  }, 0);
+                }}
+              />
             </div>
           </div>
         )}
