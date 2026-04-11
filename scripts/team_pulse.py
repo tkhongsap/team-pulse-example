@@ -1,16 +1,22 @@
 #!/usr/bin/env python3
 """
-Team Pulse — Daily GitHub Activity Snapshot
+Team Pulse — Daily GitHub Activity Snapshot (AM/PM)
 
 Extracts daily activity from configured GitHub repos and writes a
-structured markdown report to docs/daily/YYYY-MM-DD.md.
+structured markdown report to docs/daily/YYYY-MM-DD-am.md or -pm.md.
+
+Designed to run twice daily (Bangkok time, UTC+7):
+  - 07:00  →  Morning snapshot (what needs attention today)
+  - 18:00  →  Evening snapshot (what got done today)
 
 Prerequisites: gh CLI installed and authenticated.
 
 Usage:
-    python scripts/team_pulse.py                    # today
-    python scripts/team_pulse.py --date 2026-04-11  # specific date
-    python scripts/team_pulse.py --repos karpathy/autoresearch garrytan/gstack
+    python scripts/team_pulse.py                          # auto-detect AM/PM
+    python scripts/team_pulse.py --period am              # force morning
+    python scripts/team_pulse.py --period pm              # force evening
+    python scripts/team_pulse.py --date 2026-04-11 --period am
+    python scripts/team_pulse.py --date 2026-04-11 --period pm
 """
 
 import argparse
@@ -20,7 +26,7 @@ import sys
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
-# ── Config ─────────────────────────────���──────────────────────────────
+# ── Config ────────────────────────────────────────────────────────────
 DEFAULT_REPOS = [
     "karpathy/autoresearch",
     "garrytan/gstack",
@@ -28,6 +34,36 @@ DEFAULT_REPOS = [
 STUCK_THRESHOLD_DAYS = 3
 OUTPUT_DIR = Path(__file__).resolve().parent.parent / "docs" / "daily"
 PER_PAGE = 100  # max items per API page
+
+# Bangkok timezone (ICT = UTC+7)
+TZ_BANGKOK = timezone(timedelta(hours=7))
+
+PERIOD_CONFIG = {
+    "am": {
+        "label": "Morning Snapshot",
+        "time": "07:00",
+        "icon": "sunrise",
+        "focus": "What needs attention today",
+        "prompts": [
+            "Morning to-do list — prioritize what needs action today",
+            "Stuck items triage — what's been blocked and who should unblock it",
+            "Review queue — which PRs need review before they go stale",
+            "Workload check — is anyone overloaded or idle heading into today",
+        ],
+    },
+    "pm": {
+        "label": "Evening Snapshot",
+        "time": "18:00",
+        "icon": "city_sunset",
+        "focus": "What got done today",
+        "prompts": [
+            "End-of-day summary — what the team accomplished today",
+            "Compare with this morning's snapshot — what changed during the day",
+            "Unfinished items — what carried over and needs attention tomorrow",
+            "Burnout signals — who worked late, who had an unusually heavy day",
+        ],
+    },
+}
 
 
 # ── GitHub API helpers ────────────────────────────────────────────────
@@ -40,7 +76,7 @@ def gh_api(endpoint, paginate=False):
 
     result = subprocess.run(cmd, capture_output=True, text=True, timeout=60)
     if result.returncode != 0:
-        print(f"  ⚠ gh api {endpoint}: {result.stderr.strip()}", file=sys.stderr)
+        print(f"  Warning: gh api {endpoint}: {result.stderr.strip()}", file=sys.stderr)
         return []
 
     text = result.stdout.strip()
@@ -56,23 +92,7 @@ def gh_api(endpoint, paginate=False):
         return []
 
 
-def gh_api_graphql(query, variables=None):
-    """Call `gh api graphql` and return the data dict."""
-    cmd = ["gh", "api", "graphql", "-f", f"query={query}"]
-    if variables:
-        for k, v in variables.items():
-            cmd.extend(["-f", f"{k}={v}"])
-    result = subprocess.run(cmd, capture_output=True, text=True, timeout=60)
-    if result.returncode != 0:
-        print(f"  ⚠ graphql: {result.stderr.strip()}", file=sys.stderr)
-        return {}
-    try:
-        return json.loads(result.stdout).get("data", {})
-    except json.JSONDecodeError:
-        return {}
-
-
-# ── Data collection ────────────────────────────────��──────────────────
+# ── Data collection ───────────────────────────────────────────────────
 
 def fetch_commits(repo, date_str):
     """Commits pushed to default branch on `date_str`."""
@@ -103,10 +123,9 @@ def fetch_commits(repo, date_str):
 
 def fetch_pulls(repo):
     """All recently-updated PRs (state=all, sorted by updated desc)."""
-    raw = gh_api(
+    return gh_api(
         f"repos/{repo}/pulls?state=all&sort=updated&direction=desc&per_page={PER_PAGE}",
     )
-    return raw
 
 
 def fetch_issues(repo):
@@ -114,13 +133,7 @@ def fetch_issues(repo):
     raw = gh_api(
         f"repos/{repo}/issues?state=all&sort=updated&direction=desc&per_page={PER_PAGE}",
     )
-    # GitHub issues API includes PRs — filter them out
     return [i for i in raw if "pull_request" not in i]
-
-
-def fetch_reviews(repo, pr_number):
-    """Fetch reviews for a single PR."""
-    return gh_api(f"repos/{repo}/pulls/{pr_number}/reviews")
 
 
 # ── Analysis / filtering ─────────────────────────────────────────────
@@ -205,7 +218,6 @@ def filter_issues_by_date(issues, date_str):
         labels = [l["name"] for l in issue.get("labels", [])]
         assignees = [a.get("login", "") for a in issue.get("assignees", [])]
         comments = issue.get("comments", 0)
-        updated = issue.get("updated_at", "")[:10]
 
         if created == date_str:
             opened_today.append({
@@ -222,7 +234,7 @@ def filter_issues_by_date(issues, date_str):
                 "number": number,
                 "title": title,
                 "author": author,
-                "closed_by": author,  # API doesn't always give closer
+                "closed_by": author,
                 "url": url,
             })
 
@@ -245,7 +257,7 @@ def filter_issues_by_date(issues, date_str):
     return opened_today, closed_today, open_issues
 
 
-# ── Helpers ──────────────────────────��───────────────────────────���────
+# ── Helpers ───────────────────────────────────────────────────────────
 
 def _parse_ts(ts_str):
     """Parse ISO timestamp string to datetime."""
@@ -273,17 +285,38 @@ def _label_str(labels):
     return " ".join(f"`{l}`" for l in labels)
 
 
+def _now_bangkok():
+    """Current datetime in Bangkok timezone."""
+    return datetime.now(TZ_BANGKOK)
+
+
+def _detect_period():
+    """Auto-detect AM or PM based on Bangkok time. Before 12:00 = am."""
+    now = _now_bangkok()
+    return "am" if now.hour < 12 else "pm"
+
+
 # ── Markdown report generation ────────────────────────────────────────
 
-def generate_report(date_str, repo_data):
+def generate_report(date_str, period, repo_data, output_dir):
     """Build the full daily pulse markdown from collected repo data."""
+    conf = PERIOD_CONFIG[period]
+    now_bkk = _now_bangkok()
     lines = []
     w = lines.append
 
-    w(f"# Daily Pulse — {date_str}")
+    # ── Header ──
+    w(f"# Daily Pulse — {date_str} ({conf['label']})")
     w("")
-    w(f"> Generated: {datetime.now().strftime('%Y-%m-%d %H:%M')}")
+    w(f"> Period: **{period.upper()}** ({conf['focus']})")
+    w(f"> Snapshot taken: {now_bkk.strftime('%Y-%m-%d %H:%M')} (Bangkok, UTC+7)")
     w(f"> Repos: {', '.join(r['repo'] for r in repo_data)}")
+
+    # Reference the other snapshot if it exists
+    other_period = "pm" if period == "am" else "am"
+    other_file = output_dir / f"{date_str}-{other_period}.md"
+    if other_file.exists():
+        w(f"> Companion: [{date_str}-{other_period}.md]({date_str}-{other_period}.md)")
     w("")
 
     # ── Totals bar ──
@@ -299,8 +332,8 @@ def generate_report(date_str, repo_data):
 
     w("## Summary")
     w("")
-    w(f"| Metric | Count |")
-    w(f"|--------|-------|")
+    w("| Metric | Count |")
+    w("|--------|-------|")
     w(f"| Commits | {total_commits} |")
     w(f"| PRs opened | {total_prs_opened} |")
     w(f"| PRs merged | {total_prs_merged} |")
@@ -320,8 +353,8 @@ def generate_report(date_str, repo_data):
     if total_commits == 0:
         w("_No commits on this date._")
     else:
-        w("| Repo | Author | Message | Time |")
-        w("|------|--------|---------|------|")
+        w("| Repo | Author | Message | Time (UTC) |")
+        w("|------|--------|---------|------------|")
         for r in repo_data:
             repo_short = r["repo"].split("/")[1]
             for c in r["commits"]:
@@ -362,7 +395,7 @@ def generate_report(date_str, repo_data):
                 w(f"| {repo_short} | [#{p['number']}]({p['url']}) | {p['author']} | {p['merged_by']} | {p['title']} | {p['time_to_merge']} |")
     w("")
 
-    # ── Open PRs Needing Attention ──
+    # ── Open PRs ──
     w("---")
     w("")
     w(f"## Open PRs ({total_open_prs})")
@@ -432,30 +465,29 @@ def generate_report(date_str, repo_data):
                 w(f"| {repo_short} | [#{i['number']}]({i['url']}) | {i['author']} | {i['title']} | {assignees} | {i['comments']} | {i['days_since_update']} | {stuck_flag} |")
     w("")
 
-    # ── Contributor Activity Heatmap ──
+    # ── Contributor Activity ──
     w("---")
     w("")
     w("## Contributor Activity")
     w("")
 
-    # Aggregate per-person stats
     people = {}
     for r in repo_data:
         for c in r["commits"]:
             name = c["author"]
-            people.setdefault(name, {"commits": 0, "prs_opened": 0, "prs_merged": 0, "reviews_requested": 0, "late_night": 0})
+            people.setdefault(name, {"commits": 0, "prs_opened": 0, "prs_merged": 0, "late_night": 0})
             people[name]["commits"] += 1
             if c["hour"] >= 22 or (0 <= c["hour"] < 6):
                 people[name]["late_night"] += 1
 
         for p in r["prs_opened"]:
             name = p["author"]
-            people.setdefault(name, {"commits": 0, "prs_opened": 0, "prs_merged": 0, "reviews_requested": 0, "late_night": 0})
+            people.setdefault(name, {"commits": 0, "prs_opened": 0, "prs_merged": 0, "late_night": 0})
             people[name]["prs_opened"] += 1
 
         for p in r["prs_merged"]:
             name = p["author"]
-            people.setdefault(name, {"commits": 0, "prs_opened": 0, "prs_merged": 0, "reviews_requested": 0, "late_night": 0})
+            people.setdefault(name, {"commits": 0, "prs_opened": 0, "prs_merged": 0, "late_night": 0})
             people[name]["prs_merged"] += 1
 
     if not people:
@@ -490,14 +522,12 @@ def generate_report(date_str, repo_data):
                 w(f"- [{repo_name.split('/')[1]}#{i['number']}]({i['url']}) — **{i['title']}** by {i['author']} ({i['days_since_update']}d since last update, 0 comments)")
             w("")
 
-    # ── Footer ──
+    # ── Footer with period-specific prompts ──
     w("---")
     w("")
-    w("*This snapshot is raw data. Ask Claude to analyze it for:*")
-    w("- *Morning to-do list (what needs attention today)*")
-    w("- *End-of-day summary (what got done)*")
-    w("- *Workload and resource overview (who's doing what)*")
-    w("- *Stuck items triage (what's blocked and why)*")
+    w(f"*{conf['label']} — {conf['focus']}. Ask Claude to analyze this snapshot for:*")
+    for prompt in conf["prompts"]:
+        w(f"- *{prompt}*")
     w("")
 
     return "\n".join(lines)
@@ -506,21 +536,42 @@ def generate_report(date_str, repo_data):
 # ── Main ──────────────────────────────────────────────────────────────
 
 def main():
-    parser = argparse.ArgumentParser(description="Team Pulse — Daily GitHub Snapshot")
-    parser.add_argument("--date", default=datetime.now().strftime("%Y-%m-%d"),
-                        help="Date to extract (YYYY-MM-DD, default: today)")
-    parser.add_argument("--repos", nargs="+", default=DEFAULT_REPOS,
-                        help="GitHub repos to track (owner/name)")
-    parser.add_argument("--output-dir", type=Path, default=OUTPUT_DIR,
-                        help="Output directory for daily notes")
+    parser = argparse.ArgumentParser(
+        description="Team Pulse — Daily GitHub Snapshot (AM/PM)",
+        epilog="Schedule: 07:00 Bangkok (AM) and 18:00 Bangkok (PM)",
+    )
+    parser.add_argument(
+        "--date",
+        default=_now_bangkok().strftime("%Y-%m-%d"),
+        help="Date to extract (YYYY-MM-DD, default: today in Bangkok time)",
+    )
+    parser.add_argument(
+        "--period",
+        choices=["am", "pm"],
+        default=None,
+        help="Snapshot period (default: auto-detect from Bangkok time)",
+    )
+    parser.add_argument(
+        "--repos", nargs="+", default=DEFAULT_REPOS,
+        help="GitHub repos to track (owner/name)",
+    )
+    parser.add_argument(
+        "--output-dir", type=Path, default=OUTPUT_DIR,
+        help="Output directory for daily notes",
+    )
     args = parser.parse_args()
 
     date_str = args.date
+    period = args.period or _detect_period()
     repos = args.repos
     output_dir = args.output_dir
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    print(f"Team Pulse — extracting data for {date_str}")
+    conf = PERIOD_CONFIG[period]
+    now_bkk = _now_bangkok()
+
+    print(f"Team Pulse — {conf['label']}")
+    print(f"Date: {date_str}  |  Period: {period.upper()}  |  Bangkok time: {now_bkk.strftime('%H:%M')}")
     print(f"Repos: {', '.join(repos)}")
     print()
 
@@ -529,17 +580,17 @@ def main():
     for repo in repos:
         print(f"  [{repo}] Fetching commits...")
         commits = fetch_commits(repo, date_str)
-        print(f"    → {len(commits)} commits")
+        print(f"    > {len(commits)} commits")
 
         print(f"  [{repo}] Fetching pull requests...")
         pulls = fetch_pulls(repo)
         prs_opened, prs_merged, open_prs = filter_prs_by_date(pulls, date_str)
-        print(f"    → {len(prs_opened)} opened, {len(prs_merged)} merged, {len(open_prs)} open")
+        print(f"    > {len(prs_opened)} opened, {len(prs_merged)} merged, {len(open_prs)} open")
 
         print(f"  [{repo}] Fetching issues...")
         issues = fetch_issues(repo)
         issues_opened, issues_closed, open_issues = filter_issues_by_date(issues, date_str)
-        print(f"    → {len(issues_opened)} opened, {len(issues_closed)} closed, {len(open_issues)} open")
+        print(f"    > {len(issues_opened)} opened, {len(issues_closed)} closed, {len(open_issues)} open")
 
         repo_data.append({
             "repo": repo,
@@ -554,9 +605,9 @@ def main():
 
     print()
     print("Generating report...")
-    report = generate_report(date_str, repo_data)
+    report = generate_report(date_str, period, repo_data, output_dir)
 
-    output_file = output_dir / f"{date_str}.md"
+    output_file = output_dir / f"{date_str}-{period}.md"
     output_file.write_text(report)
     print(f"Written to: {output_file}")
     print("Done.")
