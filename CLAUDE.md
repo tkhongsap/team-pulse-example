@@ -35,7 +35,12 @@ but rarely edit directly.
 - `wiki/connections/` — cross-cutting insights linking two or more concepts
 - `wiki/reports/` — morning briefings, EOD summaries, dashboards (daily reports live here)
 
-## Three Operations
+### 4. Outputs (`outputs/`)
+Saved Q&A answers from `/ask` queries. These accumulate over time — every question
+you ask against the wiki gets its answer saved here. Notable answers can be filed
+back into `wiki/` to enhance the knowledge base. This is the compounding loop.
+
+## Four Operations
 
 ### Ingest (`/compile-wiki`)
 Process new raw sources into the wiki. The LLM reads new files, extracts knowledge,
@@ -46,6 +51,11 @@ A single source may touch 10-15 wiki pages.
 Ask questions against the wiki. The LLM reads `wiki/index.md` first to find relevant
 articles, then reads those articles, then synthesizes an answer. Notable findings
 should be filed back into the wiki to compound knowledge.
+
+### Ask (`/ask`)
+Ask any question against the wiki. The LLM reads `wiki/index.md`, selects relevant
+articles, synthesizes an answer, and saves it to `outputs/YYYY-MM-DD-{slug}.md`.
+Notable answers can be filed back into `wiki/` to compound knowledge.
 
 ### Lint (`/lint-wiki`)
 Health-check the wiki. Find broken links, orphan pages, uncompiled sources, stale
