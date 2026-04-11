@@ -1,0 +1,299 @@
+{
+  "project": "team-pulse-example",
+  "branchName": "ralph/team-pulse-production",
+  "description": "Team Pulse Production System — Automated backend (Agent SDK compile + report scripts, pipeline orchestrator, cron) and claude.ai-style web app (Next.js dashboard + chat with Agent SDK streaming, wiki viewer, auth, dark mode).",
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "Create Agent SDK compile script",
+      "description": "As a system operator, I want wiki compilation to run via the Agent SDK so that it can be triggered by cron without Claude Code.",
+      "acceptanceCriteria": [
+        "scripts/compile.py exists and runs with: python scripts/compile.py",
+        "Uses claude_agent_sdk.query() with allowed_tools=['Read', 'Write', 'Edit', 'Glob', 'Grep']",
+        "Sets setting_sources=['project'] so CLAUDE.md is loaded automatically",
+        "Reads wiki/log.md to identify uncompiled raw files in raw/github-daily/",
+        "Creates or updates wiki articles in wiki/contributors/, wiki/projects/, wiki/patterns/, wiki/connections/",
+        "Updates wiki/index.md with new or modified entries",
+        "Appends to wiki/log.md with timestamp and summary of what was compiled",
+        "Requires ANTHROPIC_API_KEY environment variable (exits with error if missing)",
+        "Loads .env via python-dotenv",
+        "Prints cost estimate and summary after completion",
+        "Typecheck passes"
+      ],
+      "priority": 1,
+      "passes": false,
+      "notes": "Reference: .claude/commands/compile-wiki.md for the prompt logic. The script wraps the same prompt in an Agent SDK call."
+    },
+    {
+      "id": "US-002",
+      "title": "Create Agent SDK report generation script",
+      "description": "As a system operator, I want report generation to run via the Agent SDK so that morning briefings and EOD summaries are generated automatically.",
+      "acceptanceCriteria": [
+        "scripts/generate_report.py exists with --type morning|eod|dashboard and --date YYYY-MM-DD flags",
+        "Uses claude_agent_sdk.query() with allowed_tools=['Read', 'Glob', 'Grep', 'Write']",
+        "Sets setting_sources=['project'] so CLAUDE.md and .claude/commands/ are loaded",
+        "For --type morning: reads raw/github-daily/YYYY-MM-DD-am.md + wiki articles, writes to wiki/reports/YYYY-MM-DD-morning-briefing.md",
+        "For --type eod: reads AM + PM snapshots + morning briefing + wiki, writes to wiki/reports/YYYY-MM-DD-eod-summary.md",
+        "For --type dashboard: reads 7 days of data + wiki, writes to wiki/reports/YYYY-MM-DD-team-dashboard.md",
+        "Defaults to today's date if --date not provided",
+        "Requires ANTHROPIC_API_KEY environment variable",
+        "Loads .env via python-dotenv",
+        "Typecheck passes"
+      ],
+      "priority": 2,
+      "passes": false,
+      "notes": "Reference: .claude/commands/morning-briefing.md, eod-summary.md, team-dashboard.md for prompt logic."
+    },
+    {
+      "id": "US-003",
+      "title": "Create pipeline orchestrator script",
+      "description": "As a system operator, I want a single command that runs extract, compile, report, and git push so cron only needs one entry.",
+      "acceptanceCriteria": [
+        "scripts/run_pipeline.py exists with --period am|pm flag",
+        "Runs team_pulse.py --period {period} and verifies the output file was created in raw/github-daily/",
+        "Runs compile.py and verifies wiki/log.md was updated",
+        "Runs generate_report.py --type morning (for AM) or --type eod (for PM)",
+        "Runs git add, git commit, git push after all steps complete successfully",
+        "Logs each step's status and timing to scripts/pipeline.log",
+        "Exits with non-zero code if ANY step fails — does NOT commit partial state",
+        "Prints summary: files created, articles updated, total time",
+        "Typecheck passes"
+      ],
+      "priority": 3,
+      "passes": false,
+      "notes": "Depends on US-001 and US-002. This is the single entry point for cron."
+    },
+    {
+      "id": "US-004",
+      "title": "Create .env template and crontab configuration",
+      "description": "As a system operator, I want documented configuration files so I can set up the system on any machine.",
+      "acceptanceCriteria": [
+        ".env.example exists with: ANTHROPIC_API_KEY=your-key-here, GITHUB_TOKEN= (optional), TEAM_PULSE_REPOS=karpathy/autoresearch,garrytan/gstack, TEAM_PULSE_TIMEZONE=Asia/Bangkok",
+        "scripts/team_pulse.py reads TEAM_PULSE_REPOS from env if set (falls back to DEFAULT_REPOS constant)",
+        "All Agent SDK scripts (compile.py, generate_report.py) load .env via python-dotenv at startup",
+        "scripts/crontab.txt contains two entries: 0 0 * * * for 7AM Bangkok (AM) and 0 11 * * * for 6PM Bangkok (PM)",
+        "Each cron entry runs run_pipeline.py with correct --period flag",
+        "scripts/setup-cron.sh installs the crontab (with instructions as comments)",
+        "Typecheck passes"
+      ],
+      "priority": 4,
+      "passes": false,
+      "notes": "7AM Bangkok = 00:00 UTC, 6PM Bangkok = 11:00 UTC."
+    },
+    {
+      "id": "US-005",
+      "title": "Initialize Next.js web app with Tailwind and shadcn/ui",
+      "description": "As a developer, I need the web app scaffolded with the correct tech stack so I can build components.",
+      "acceptanceCriteria": [
+        "web/ directory created with Next.js 14+ using App Router",
+        "Tailwind CSS configured and working",
+        "shadcn/ui initialized with default components (Button, Card, Input, Badge, Sheet)",
+        "Inter font loaded for body text",
+        "JetBrains Mono loaded for code blocks",
+        "web/package.json has all required dependencies",
+        "npm run dev starts dev server on localhost:3000 without errors",
+        "Root page at / renders Team Pulse placeholder text",
+        "Typecheck passes"
+      ],
+      "priority": 5,
+      "passes": false,
+      "notes": "See docs/frontend-design.md for full design spec. Use App Router, not Pages Router."
+    },
+    {
+      "id": "US-006",
+      "title": "Build three-panel layout with sidebar",
+      "description": "As a team lead, I want a claude.ai-style layout with a sidebar for navigation and a main content area.",
+      "acceptanceCriteria": [
+        "Layout has: sidebar (280px) + header bar (56px) + main content area",
+        "Sidebar has three collapsible sections: Quick Actions, Reports Archive, Wiki Browser",
+        "Quick Actions section has buttons: New Chat, Morning Briefing, EOD Summary, Team Dashboard",
+        "Reports Archive lists available dates from wiki/reports/ directory",
+        "Wiki Browser has subsections: Contributors, Projects, Patterns, Connections reading from wiki/ directory",
+        "Clicking a sidebar item sets the main area content (route change)",
+        "Active sidebar item is visually highlighted",
+        "Sidebar background: #f9fafb (light mode)",
+        "Header shows: Team Pulse logo/text + current date + placeholder for user menu",
+        "Typecheck passes",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 6,
+      "passes": false,
+      "notes": "See docs/frontend-design.md section 1 (Sidebar) and section 2 (Header). Use shadcn/ui Sheet for mobile sidebar."
+    },
+    {
+      "id": "US-007",
+      "title": "Build markdown report viewer",
+      "description": "As a team lead, I want to read morning briefings and EOD summaries as rendered markdown in the browser.",
+      "acceptanceCriteria": [
+        "API route GET /api/reports/[date]/[type] reads and returns markdown from wiki/reports/",
+        "Page route /reports/[date]/[type] renders the markdown with react-markdown + remark-gfm",
+        "Tables render with proper styling (borders, alternating rows)",
+        "Headers, bold, code blocks, and lists render correctly",
+        "Back to Chat button navigates to /",
+        "404 page shown if report does not exist for that date",
+        "Typecheck passes",
+        "Verify in browser: navigate to /reports/2026-04-11/morning-briefing, confirm tables render"
+      ],
+      "priority": 7,
+      "passes": false,
+      "notes": "Use react-markdown with remark-gfm plugin. The wiki/reports/ files are standard markdown."
+    },
+    {
+      "id": "US-008",
+      "title": "Build wiki article viewer with wikilink support",
+      "description": "As a team lead, I want to browse contributor profiles and pattern articles with clickable cross-references.",
+      "acceptanceCriteria": [
+        "API route GET /api/wiki/[...slug] reads markdown from wiki/ directory",
+        "Page route /wiki/[...slug] renders the article (e.g., /wiki/contributors/garrytan)",
+        "YAML frontmatter parsed and displayed as metadata header (title, updated date, tags)",
+        "[[wikilinks]] in article text render as clickable chips/links navigating within the app",
+        "Related section links are clickable and navigate correctly",
+        "Typecheck passes",
+        "Verify in browser: navigate to /wiki/contributors/garrytan, confirm wikilinks work"
+      ],
+      "priority": 8,
+      "passes": false,
+      "notes": "Parse [[contributors/garrytan]] into links to /wiki/contributors/garrytan. Use regex to find wikilinks in markdown."
+    },
+    {
+      "id": "US-009",
+      "title": "Build chat interface with message display",
+      "description": "As a team member, I want a chat interface at the root route where I can type questions and see responses.",
+      "acceptanceCriteria": [
+        "Chat is the default view at /",
+        "Input bar at bottom: auto-expanding textarea + Send button",
+        "User messages display with 'You' label and light gray background (#f3f4f6)",
+        "AI messages display with 'Team Pulse' label and white background",
+        "Messages render markdown (tables, headers, bold, code blocks)",
+        "Send button disabled while response is loading (spinner shown)",
+        "Chat area scrolls to bottom on new messages",
+        "Typecheck passes",
+        "Verify in browser: type a message, confirm it appears in the chat area"
+      ],
+      "priority": 9,
+      "passes": false,
+      "notes": "This story builds the UI only. The Agent SDK backend (streaming) is US-010."
+    },
+    {
+      "id": "US-010",
+      "title": "Connect chat to Agent SDK backend with streaming",
+      "description": "As a team member, I want my questions answered by Claude reading the wiki, with responses streaming in real-time.",
+      "acceptanceCriteria": [
+        "API route POST /api/ask accepts { question: string, sessionId?: string }",
+        "Backend uses claude_agent_sdk.query() with allowed_tools=['Read', 'Glob', 'Grep'] and setting_sources=['project']",
+        "Response streams via Server-Sent Events to the frontend",
+        "Text appears word-by-word in the chat UI as the Agent SDK yields messages",
+        "Session ID captured from Agent SDK init message and stored in browser sessionStorage",
+        "Follow-up questions use resume=sessionId for conversation memory",
+        "ANTHROPIC_API_KEY loaded from environment",
+        "Typecheck passes",
+        "Verify in browser: ask 'Who is busiest today?', confirm streaming response with wiki content"
+      ],
+      "priority": 10,
+      "passes": false,
+      "notes": "Depends on US-009 (chat UI). The Agent SDK runs in the Next.js API route. Stream using ReadableStream or EventSource."
+    },
+    {
+      "id": "US-011",
+      "title": "Display source citations in chat responses",
+      "description": "As a team lead, I want to see which wiki articles were consulted so I can verify the answer.",
+      "acceptanceCriteria": [
+        "Source citation block displayed at bottom of each AI response",
+        "Each source rendered as a clickable chip: [garrytan.md] [burnout-signals.md]",
+        "Clicking a source chip navigates to the wiki article viewer (/wiki/...)",
+        "[[wikilinks]] within response text also render as clickable chips",
+        "Typecheck passes",
+        "Verify in browser: ask a question, confirm source chips appear and navigate correctly"
+      ],
+      "priority": 11,
+      "passes": false,
+      "notes": "Parse Agent SDK tool_use messages to identify which files were Read. Display as citations."
+    },
+    {
+      "id": "US-012",
+      "title": "Add suggested questions on empty chat",
+      "description": "As a new user, I want to see suggested questions when the chat is empty so I know what to ask.",
+      "acceptanceCriteria": [
+        "Empty chat displays 4 suggestion cards in a 2x2 grid centered in main area",
+        "Cards: 'Who needs help?' (burnout), 'Today's briefing' (morning report), 'Weekly summary' (management), 'Compare repos' (gstack vs autoresearch)",
+        "Each card has an icon, title, and short description",
+        "Clicking a card sends that question to the chat",
+        "Cards disappear once the first message is sent",
+        "Typecheck passes",
+        "Verify in browser: load /, confirm 4 cards visible, click one, confirm chat starts"
+      ],
+      "priority": 12,
+      "passes": false,
+      "notes": "See docs/frontend-design.md section 6 (Suggested Questions)."
+    },
+    {
+      "id": "US-013",
+      "title": "Add dark/light mode toggle",
+      "description": "As a user, I want to switch between dark and light themes.",
+      "acceptanceCriteria": [
+        "Toggle button in header bar with sun/moon icon",
+        "Light mode colors per docs/frontend-design.md: white bg, #111827 text, #4f46e5 accent",
+        "Dark mode colors per docs/frontend-design.md: #0f172a bg, #f1f5f9 text, #818cf8 accent",
+        "Theme preference saved in localStorage and restored on page load",
+        "All components respect the theme: sidebar, chat, report viewer, wiki viewer",
+        "Typecheck passes",
+        "Verify in browser: toggle dark mode, confirm all areas switch correctly"
+      ],
+      "priority": 13,
+      "passes": false,
+      "notes": "Use next-themes or Tailwind dark: class strategy. See docs/frontend-design.md section 4."
+    },
+    {
+      "id": "US-014",
+      "title": "Add GitHub OAuth authentication",
+      "description": "As an admin, I want only authenticated team members to access the app.",
+      "acceptanceCriteria": [
+        "NextAuth.js configured with GitHub OAuth provider",
+        "Unauthenticated users see a login page with 'Sign in with GitHub' button",
+        "Authenticated users see their avatar and name in the header bar",
+        "Clicking the avatar shows a dropdown with 'Sign out' option",
+        "GITHUB_CLIENT_ID and GITHUB_CLIENT_SECRET added to .env.example",
+        "NEXTAUTH_SECRET added to .env.example",
+        "All API routes return 401 for unauthenticated requests",
+        "Typecheck passes",
+        "Verify in browser: access / while logged out, confirm redirect to login page"
+      ],
+      "priority": 14,
+      "passes": false,
+      "notes": "Use NextAuth.js v4+ with the GitHub provider. Session stored in JWT."
+    },
+    {
+      "id": "US-015",
+      "title": "Make layout mobile responsive",
+      "description": "As a team lead, I want to use the app on my phone.",
+      "acceptanceCriteria": [
+        "At <768px: sidebar hidden, hamburger menu icon in header toggles sidebar as overlay",
+        "At 768-1024px: sidebar collapsed to 60px icon-only mode",
+        "At >1024px: full 280px sidebar shown",
+        "Chat input bar fixed at bottom on all screen sizes",
+        "Tables in reports scroll horizontally on small screens (overflow-x-auto)",
+        "Typecheck passes",
+        "Verify in browser: resize to 375px width, confirm sidebar hidden and chat usable"
+      ],
+      "priority": 15,
+      "passes": false,
+      "notes": "Use Tailwind responsive breakpoints (md:, lg:). shadcn/ui Sheet component for mobile sidebar overlay."
+    },
+    {
+      "id": "US-016",
+      "title": "Add rate limiting and usage tracking",
+      "description": "As an admin, I want to limit API costs and track usage.",
+      "acceptanceCriteria": [
+        "Rate limit: max 100 POST /api/ask requests per user per day",
+        "Rate limit exceeded returns 429 with message: 'Daily query limit reached. Resets at midnight Bangkok time.'",
+        "Usage counter displayed in header or settings: 'X/100 queries today'",
+        "Rate limit tracked per GitHub user (from auth session)",
+        "Rate limit resets at 00:00 Bangkok time daily",
+        "Typecheck passes"
+      ],
+      "priority": 16,
+      "passes": false,
+      "notes": "Simple in-memory counter per user is fine for v1. Persistent storage (Redis/DB) for production later."
+    }
+  ]
+}
