@@ -43,21 +43,33 @@ async def main():
 asyncio.run(main())
 ```
 
-## Built-in Tools
+## Built-in Tools (10)
 
 | Tool | What it does |
 |------|-------------|
-| Read | Read any file in the working directory |
-| Write | Create new files |
-| Edit | Make precise edits to existing files |
-| Bash | Run terminal commands, scripts, git operations |
-| Glob | Find files by pattern |
-| Grep | Search file contents with regex |
-| WebSearch | Search the web |
-| WebFetch | Fetch and parse web pages |
-| Agent | Spawn subagents for delegation |
-| AskUserQuestion | Ask the user clarifying questions |
-| Monitor | Watch a background script |
+| **Read** | Read any file in the working directory |
+| **Write** | Create new files |
+| **Edit** | Make precise edits to existing files |
+| **Bash** | Run terminal commands, scripts, git operations |
+| **Monitor** | Watch a background script and react to each output line as an event |
+| **Glob** | Find files by pattern (`**/*.ts`, `src/**/*.py`) |
+| **Grep** | Search file contents with regex |
+| **WebSearch** | Search the web for current information |
+| **WebFetch** | Fetch and parse web page content |
+| **AskUserQuestion** | Ask the user clarifying questions with multiple choice options |
+
+## Additional Capabilities
+
+| Feature | What it does | How to enable |
+|---------|-------------|---------------|
+| **Subagents** | Spawn specialized sub-agents for focused subtasks | Add `Agent` to `allowed_tools` + define `agents={}` |
+| **MCP servers** | Connect to external systems (databases, browsers, APIs) | `mcp_servers={"name": {"command": "...", "args": [...]}}` |
+| **Hooks** | Run custom code at lifecycle points (PreToolUse, PostToolUse, Stop, SessionStart, SessionEnd) | `hooks={"PostToolUse": [...]}` |
+| **Sessions** | Maintain context across exchanges, resume later | `resume=session_id` |
+| **Skills** | Specialized capabilities in markdown | `setting_sources=["project"]` → reads `.claude/skills/*/SKILL.md` |
+| **Slash commands** | Custom commands for common tasks | `setting_sources=["project"]` → reads `.claude/commands/*.md` |
+| **Memory (CLAUDE.md)** | Project context and instructions | `setting_sources=["project"]` → reads `CLAUDE.md` |
+| **Plugins** | Extend with custom commands, agents, MCP servers | `plugins=[...]` option |
 
 ## Key Feature: setting_sources
 
