@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { AppShell } from "@/components/app-shell";
+import { ThemeProvider } from "@/components/theme-provider";
 import { getWikiArticles, getReportDates } from "@/lib/wiki";
 
 const inter = Inter({
@@ -34,17 +35,20 @@ export default function RootLayout({
     <html
       lang="en"
       className={`${inter.variable} ${jetbrainsMono.variable} h-full antialiased`}
+      suppressHydrationWarning
     >
       <body className="min-h-full font-sans">
-        <AppShell
-          contributors={contributors}
-          projects={projects}
-          patterns={patterns}
-          connections={connections}
-          reportDates={reportDates}
-        >
-          {children}
-        </AppShell>
+        <ThemeProvider>
+          <AppShell
+            contributors={contributors}
+            projects={projects}
+            patterns={patterns}
+            connections={connections}
+            reportDates={reportDates}
+          >
+            {children}
+          </AppShell>
+        </ThemeProvider>
       </body>
     </html>
   );

@@ -1,5 +1,7 @@
 "use client";
 
+import { ThemeToggle } from "./theme-toggle";
+
 interface HeaderProps {
   onToggleSidebar: () => void;
 }
@@ -42,6 +44,7 @@ export function Header({ onToggleSidebar }: HeaderProps) {
       </div>
 
       <div className="flex items-center gap-2">
+        <ThemeToggle />
         <span className="text-sm text-muted-foreground">User</span>
       </div>
     </header>
