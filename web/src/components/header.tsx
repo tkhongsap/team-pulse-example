@@ -2,7 +2,6 @@
 
 import { ThemeToggle } from "./theme-toggle";
 import { UsageCounter } from "./usage-counter";
-import { UserMenu } from "./user-menu";
 
 interface HeaderProps {
   onToggleSidebar: () => void;
@@ -48,7 +47,6 @@ export function Header({ onToggleSidebar }: HeaderProps) {
       <div className="flex items-center gap-3">
         <UsageCounter />
         <ThemeToggle />
-        <UserMenu />
       </div>
     </header>
   );

@@ -5,14 +5,17 @@ import { checkRateLimit, incrementUsage } from "@/lib/rate-limit";
 
 const ASK_SERVER_URL = process.env.ASK_SERVER_URL || "http://localhost:3001";
 
-export async function POST(request: Request) {
-  // Check authentication
-  const session = await getServerSession(authOptions);
-  if (!session?.user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+function resolveUserId(session: Awaited<ReturnType<typeof getServerSession>>, request: Request): string {
+  if (session?.user) {
+    return (session.user as Record<string, unknown>).id as string || session.user.email || "anonymous";
   }
+  const clientId = request.headers.get("X-Team-Pulse-Id");
+  return clientId ? `anon:${clientId}` : "anon:shared";
+}
 
-  const userId = (session.user as Record<string, unknown>).id as string || session.user.email || "anonymous";
+export async function POST(request: Request) {
+  const session = await getServerSession(authOptions);
+  const userId = resolveUserId(session, request);
 
   // Check rate limit
   const { allowed, remaining } = checkRateLimit(userId);
