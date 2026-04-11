@@ -41,24 +41,62 @@ Automated pipeline → web dashboard + chat → entire team can use it
 
 ---
 
-## 2. Architecture Decision: SDK vs Agent SDK
+## 2. Architecture Decision: Claude Agent SDK
 
 ### The Problem
 
-Claude Code (terminal) has full agent capabilities — it reads files, browses the wiki, reasons about which articles to consult. The Anthropic API alone does not.
+Claude Code (terminal) has full agent capabilities — it reads files, browses the wiki,
+reasons about which articles to consult. Moving to production requires the same
+capabilities without a human in the terminal.
 
-### Three Options
+### The Solution: Claude Agent SDK
 
-| Approach | How it works | Pros | Cons |
-|---|---|---|---|
-| **Anthropic SDK (simple API)** | Python reads files, stuffs them into prompt, calls Claude API | Simple, cheap, deterministic | Must pre-select which files to include. No multi-step reasoning. |
-| **Claude Agent SDK** | Python gives Claude tool access (read files, grep, glob). Claude navigates the wiki itself. | Closest to Claude Code behavior. Handles free-form Q&A well. | More complex setup. Higher token cost (~$0.50/call). |
-| **Hybrid** | Simple API for structured reports (briefings, EOD). Agent SDK for free-form Q&A. | Best of both — cheap for routine, smart for exploration. | Two code paths to maintain. |
+The [Claude Agent SDK](https://code.claude.com/docs/en/agent-sdk/overview) provides
+the **same built-in tools as Claude Code** — Read, Write, Edit, Bash, Glob, Grep —
+programmable in Python. Claude navigates files autonomously, no manual file reading needed.
 
-### Decision: Hybrid
+Critical feature: `setting_sources=["project"]` makes the agent read `CLAUDE.md`
+automatically — it knows our wiki schema, article format, and operations without
+repeating them in the prompt.
 
-- **Structured reports** (morning briefing, EOD summary, dashboard): Use **simple Anthropic SDK**. We know exactly which files to read — the prompt is deterministic. Cheap ($0.05-0.15/report).
-- **Free-form Q&A** (`/ask`): Use **Claude Agent SDK** with file tools. The model needs to navigate the wiki to answer unpredictable questions. More expensive ($0.25-0.50/query) but necessary for Q&A quality.
+```python
+from claude_agent_sdk import query, ClaudeAgentOptions
+
+async for message in query(
+    prompt="Compile new raw sources into wiki following CLAUDE.md schema",
+    options=ClaudeAgentOptions(
+        allowed_tools=["Read", "Write", "Edit", "Glob", "Grep"],
+        setting_sources=["project"],  # reads CLAUDE.md automatically
+    ),
+):
+    if hasattr(message, "result"):
+        print(message.result)
+```
+
+### Why Agent SDK (not simple Anthropic API)
+
+| | Simple API | Agent SDK |
+|---|---|---|
+| File access | You read files, stuff into prompt | Claude reads files itself |
+| Multi-step reasoning | Single request/response | Agent loop with tool calls |
+| Wiki navigation | Must pre-select files | Claude browses index → selects articles |
+| CLAUDE.md support | Must include manually | Auto-loaded via setting_sources |
+| Sessions | Stateless | Resumable conversations |
+| Hooks | None | PreToolUse, PostToolUse, audit logging |
+
+The Agent SDK is the right choice for ALL operations — compile, reports, and Q&A.
+No need for a hybrid approach. One SDK, one code path.
+
+### Cost (per Anthropic API billing)
+
+| Operation | Estimated cost |
+|---|---|
+| Compile wiki | ~$0.30-0.50/run |
+| Generate report | ~$0.10-0.20/report |
+| Q&A query | ~$0.25-0.50/query |
+| Monthly total (2 runs/day + Q&A) | ~$30-50 + Q&A usage |
+
+See `ideas/agent-sdk-reference.md` for full SDK documentation and code examples.
 
 ---
 
