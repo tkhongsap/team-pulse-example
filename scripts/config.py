@@ -28,11 +28,12 @@ _offset = int(os.environ.get("TZ_OFFSET_HOURS", "7"))
 TZ = timezone(timedelta(hours=_offset))
 
 # ── Model ──────────────────────────────────────────────────────────────
-# Override by setting ANTHROPIC_MODEL in .env. Default: latest Sonnet.
+# Override by setting ANTHROPIC_MODEL in .env. Default: latest Haiku
+# (cheaper + faster, sufficient for read-and-synthesize over the wiki).
 # All Agent SDK call sites (ask_server, compile, generate_report) read
 # from here so the project is reproducible across machines regardless of
 # whatever the operator's local claude CLI defaults to.
-MODEL = os.environ.get("ANTHROPIC_MODEL", "claude-sonnet-4-6")
+MODEL = os.environ.get("ANTHROPIC_MODEL", "claude-haiku-4-5-20251001")
 
 
 def now_local() -> datetime:
