@@ -22,7 +22,7 @@ from dotenv import load_dotenv
 
 from claude_agent_sdk import ClaudeAgentOptions, ResultMessage, query
 
-from config import PROJECT_ROOT, today_local
+from config import PROJECT_ROOT, today_local, MODEL
 
 
 def load_env() -> None:
@@ -192,6 +192,7 @@ async def run_report(report_type: str, date: str) -> None:
     async for message in query(
         prompt=prompt,
         options=ClaudeAgentOptions(
+            model=MODEL,
             allowed_tools=["Read", "Glob", "Grep", "Write"],
             setting_sources=["project"],
             permission_mode="acceptEdits",
