@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useSyncExternalStore } from "react";
 import { Button } from "@/components/ui/button";
 
 interface SidebarProps {
@@ -15,6 +15,60 @@ interface SidebarProps {
   onClose: () => void;
 }
 
+function getSectionSlug(title: string): string {
+  return title
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
+}
+
+const SIDEBAR_SECTION_STORAGE_EVENT = "team-pulse-sidebar-storage";
+
+function readSectionOpenState(storageKey: string, defaultOpen: boolean): boolean {
+  if (typeof window === "undefined") {
+    return defaultOpen;
+  }
+
+  const storedValue = window.localStorage.getItem(storageKey);
+  if (storedValue === "true") return true;
+  if (storedValue === "false") return false;
+  return defaultOpen;
+}
+
+function subscribeToSectionState(
+  storageKey: string,
+  onStoreChange: () => void
+): () => void {
+  if (typeof window === "undefined") {
+    return () => {};
+  }
+
+  const handleChange = (event: Event) => {
+    if (event instanceof StorageEvent && event.key && event.key !== storageKey) {
+      return;
+    }
+    onStoreChange();
+  };
+
+  window.addEventListener("storage", handleChange);
+  window.addEventListener(SIDEBAR_SECTION_STORAGE_EVENT, handleChange);
+  queueMicrotask(onStoreChange);
+
+  return () => {
+    window.removeEventListener("storage", handleChange);
+    window.removeEventListener(SIDEBAR_SECTION_STORAGE_EVENT, handleChange);
+  };
+}
+
+function writeSectionOpenState(storageKey: string, isOpen: boolean): void {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  window.localStorage.setItem(storageKey, String(isOpen));
+  window.dispatchEvent(new Event(SIDEBAR_SECTION_STORAGE_EVENT));
+}
+
 function SidebarSection({
   title,
   defaultOpen = false,
@@ -24,13 +78,24 @@ function SidebarSection({
   defaultOpen?: boolean;
   children: React.ReactNode;
 }) {
-  const [isOpen, setIsOpen] = useState(defaultOpen);
+  const sectionSlug = getSectionSlug(title);
+  const panelId = `sidebar-section-${sectionSlug}`;
+  const storageKey = `team-pulse-sidebar:${sectionSlug}`;
+  const isOpen = useSyncExternalStore(
+    (onStoreChange) => subscribeToSectionState(storageKey, onStoreChange),
+    () => readSectionOpenState(storageKey, defaultOpen),
+    () => defaultOpen
+  );
 
   return (
     <div>
       <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center justify-between w-full px-3 py-2 text-xs font-medium uppercase tracking-wider text-muted-foreground hover:text-foreground"
+        type="button"
+        onClick={() => writeSectionOpenState(storageKey, !isOpen)}
+        aria-expanded={isOpen}
+        aria-controls={panelId}
+        title={`${isOpen ? "Collapse" : "Expand"} ${title}`}
+        className="flex w-full cursor-pointer items-center justify-between px-3 py-2 text-xs font-medium uppercase tracking-wider text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:ring-offset-2 focus-visible:ring-offset-sidebar"
       >
         {title}
         <svg
@@ -47,7 +112,9 @@ function SidebarSection({
           />
         </svg>
       </button>
-      {isOpen && <div className="pb-2">{children}</div>}
+      <div id={panelId} hidden={!isOpen} className="pb-2">
+        {children}
+      </div>
     </div>
   );
 }
