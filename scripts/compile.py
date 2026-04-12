@@ -22,7 +22,7 @@ from dotenv import load_dotenv
 
 from claude_agent_sdk import ClaudeAgentOptions, ResultMessage, query
 
-from config import PROJECT_ROOT, RAW_DIR, WIKI_LOG, COMPILE_LOCK
+from config import PROJECT_ROOT, RAW_DIR, WIKI_LOG, COMPILE_LOCK, MODEL
 
 
 def load_env() -> None:
@@ -190,6 +190,7 @@ async def run_compile(date_filter: str | None = None, force: bool = False) -> No
         async for message in query(
             prompt=prompt,
             options=ClaudeAgentOptions(
+                model=MODEL,
                 allowed_tools=["Read", "Write", "Edit", "Glob", "Grep"],
                 setting_sources=["project"],
                 permission_mode="acceptEdits",

@@ -20,7 +20,7 @@ from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
 
 from dotenv import load_dotenv
 
-from config import PROJECT_ROOT, SESSIONS_DIR
+from config import PROJECT_ROOT, SESSIONS_DIR, MODEL
 
 load_dotenv(PROJECT_ROOT / ".env")
 
@@ -288,6 +288,7 @@ def create_handler(project_root: str):
             )
 
             options = ClaudeAgentOptions(
+                model=MODEL,
                 allowed_tools=["Read", "Glob", "Grep"],
                 setting_sources=["project"],
                 permission_mode="default",

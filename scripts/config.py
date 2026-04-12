@@ -27,6 +27,13 @@ COMPILE_LOCK = PROJECT_ROOT / ".compile-lock"
 _offset = int(os.environ.get("TZ_OFFSET_HOURS", "7"))
 TZ = timezone(timedelta(hours=_offset))
 
+# ── Model ──────────────────────────────────────────────────────────────
+# Override by setting ANTHROPIC_MODEL in .env. Default: latest Sonnet.
+# All Agent SDK call sites (ask_server, compile, generate_report) read
+# from here so the project is reproducible across machines regardless of
+# whatever the operator's local claude CLI defaults to.
+MODEL = os.environ.get("ANTHROPIC_MODEL", "claude-sonnet-4-6")
+
 
 def now_local() -> datetime:
     """Current datetime in the configured local timezone."""
