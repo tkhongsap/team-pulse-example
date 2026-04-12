@@ -47,6 +47,141 @@ def _save_session(session_id: str, resume_token: str) -> None:
     except OSError:
         pass
 
+
+def _normalize_question(question: str) -> str:
+    return " ".join(
+        question.lower()
+        .replace("—", "-")
+        .replace("–", "-")
+        .replace("’", "'")
+        .split()
+    )
+
+
+def _strip_frontmatter(text: str) -> str:
+    if text.startswith("---\n"):
+        parts = text.split("\n---\n", 1)
+        if len(parts) == 2:
+            return parts[1]
+    return text
+
+
+def _read_relative_markdown(relative_path: str) -> str | None:
+    path = PROJECT_ROOT / relative_path
+    if not path.exists():
+        return None
+
+    try:
+        return _strip_frontmatter(path.read_text()).strip()
+    except OSError:
+        return None
+
+
+def _latest_report_path(suffix: str) -> str | None:
+    reports_dir = PROJECT_ROOT / "wiki" / "reports"
+    matches = sorted(reports_dir.glob(f"*{suffix}"))
+    if not matches:
+        return None
+
+    latest = matches[-1]
+    return latest.relative_to(PROJECT_ROOT).as_posix()
+
+
+def _build_structured_prompt(question: str) -> tuple[str, list[str], str] | None:
+    normalized = _normalize_question(question)
+    relative_paths: list[str] = []
+    instruction = ""
+    progress_status = "Loading selected Team Pulse sources..."
+
+    if "morning briefing" in normalized or "top priorities" in normalized:
+        latest_briefing = _latest_report_path("-morning-briefing.md")
+        if not latest_briefing:
+            return None
+        relative_paths = [latest_briefing]
+        instruction = (
+            "Answer using only the provided morning briefing. "
+            "Return a concise markdown briefing with top priorities and action items."
+        )
+        progress_status = "Loading the latest morning briefing..."
+    elif "weekly team health summary" in normalized or (
+        "weekly" in normalized and "management" in normalized and "team" in normalized
+    ):
+        latest_eod = _latest_report_path("-eod-summary.md")
+        relative_paths = [
+            "wiki/patterns/review-bottleneck.md",
+            "wiki/patterns/stuck-items-growth.md",
+            "wiki/patterns/burnout-signals.md",
+            "wiki/connections/sole-maintainer-and-stuck-growth.md",
+            "wiki/projects/gstack.md",
+            "wiki/projects/autoresearch.md",
+        ]
+        if latest_eod:
+            relative_paths.insert(0, latest_eod)
+        instruction = (
+            "Write a weekly team health summary for management. "
+            "Highlight overall status, major risks, and concrete actions."
+        )
+        progress_status = "Loading weekly health sources..."
+    elif "compare" in normalized and "gstack" in normalized and "autoresearch" in normalized:
+        relative_paths = [
+            "wiki/projects/gstack.md",
+            "wiki/projects/autoresearch.md",
+            "wiki/patterns/review-bottleneck.md",
+            "wiki/patterns/stuck-items-growth.md",
+        ]
+        instruction = (
+            "Compare the health of gstack and autoresearch. "
+            "Explain which repo needs more attention and why."
+        )
+        progress_status = "Loading repo health sources..."
+    elif "burnout risk" in normalized or (
+        "highest burnout risk" in normalized and "stuck" in normalized
+    ):
+        latest_eod = _latest_report_path("-eod-summary.md")
+        relative_paths = [
+            "wiki/patterns/burnout-signals.md",
+            "wiki/patterns/review-bottleneck.md",
+            "wiki/patterns/stuck-items-growth.md",
+            "wiki/connections/sole-maintainer-and-stuck-growth.md",
+            "wiki/projects/gstack.md",
+            "wiki/projects/autoresearch.md",
+        ]
+        if latest_eod:
+            relative_paths.insert(0, latest_eod)
+        instruction = (
+            "Identify who needs help most urgently. "
+            "Call out burnout risks, blocked contributors, and the clearest manager actions."
+        )
+        progress_status = "Loading burnout and bottleneck sources..."
+    else:
+        return None
+
+    selected_docs: list[tuple[str, str]] = []
+    for relative_path in relative_paths:
+        content = _read_relative_markdown(relative_path)
+        if content:
+            selected_docs.append((relative_path, content))
+
+    if not selected_docs:
+        return None
+
+    context = "\n\n".join(
+        f"## Source: {relative_path}\n{content}"
+        for relative_path, content in selected_docs
+    )
+
+    prompt = f"""Answer the following Team Pulse question using only the preselected source documents below.
+Do not use tools. Do not rely on unstated assumptions.
+Keep the answer concise, factual, and management-friendly.
+{instruction}
+
+Question: {question}
+
+Source documents:
+{context}"""
+
+    return prompt, [relative_path for relative_path, _ in selected_docs], progress_status
+
 SERVER_START = time.time()
 
 
@@ -253,7 +388,6 @@ def create_handler(project_root: str):
             self.send_response(200)
             self.send_header("Content-Type", "text/event-stream")
             self.send_header("Cache-Control", "no-cache")
-            self.send_header("Connection", "keep-alive")
             self.send_header("Access-Control-Allow-Origin", "*")
             self.end_headers()
 
@@ -267,6 +401,7 @@ def create_handler(project_root: str):
                 self._send_sse("error", json.dumps({"error": str(e)}))
             finally:
                 loop.close()
+                self.close_connection = True
 
         def do_OPTIONS(self) -> None:
             """Handle CORS preflight."""
@@ -284,31 +419,115 @@ def create_handler(project_root: str):
                 ResultMessage,
                 AssistantMessage,
                 SystemMessage,
+                TextBlock,
                 query,
             )
 
+            resume_token = _load_session(session_id) if session_id else None
+            result_text = ""
+            new_session_id = session_id
+            sources_read: list[str] = []
+            last_progress = ""
+
+            def send_progress(status: str) -> None:
+                nonlocal last_progress
+                if status and status != last_progress:
+                    last_progress = status
+                    self._send_sse("progress", json.dumps({"status": status}))
+
+            structured_query = _build_structured_prompt(question)
+            if structured_query:
+                prompt, structured_sources, initial_status = structured_query
+                sources_read.extend(structured_sources)
+                send_progress(initial_status)
+                send_progress("Drafting the summary...")
+
+                structured_options = ClaudeAgentOptions(
+                    model=MODEL,
+                    allowed_tools=[],
+                    setting_sources=["project"],
+                    permission_mode="default",
+                    cwd=cwd,
+                    max_turns=2,
+                )
+                if resume_token:
+                    structured_options.resume = resume_token
+
+                cost = 0.0
+                async for message in query(prompt=prompt, options=structured_options):
+                    if isinstance(message, SystemMessage):
+                        if hasattr(message, "data") and isinstance(message.data, dict):
+                            sid = message.data.get("session_id")
+                            if sid:
+                                new_session_id = sid
+
+                    if isinstance(message, AssistantMessage):
+                        if hasattr(message, "content"):
+                            for block in getattr(message, "content", []):
+                                if isinstance(block, TextBlock):
+                                    result_text += block.text
+
+                    if isinstance(message, ResultMessage):
+                        if not result_text:
+                            result_text = message.result or ""
+                        cost = message.total_cost_usd or 0.0
+                        if new_session_id and hasattr(message, "session_id"):
+                            _save_session(new_session_id, message.session_id)
+
+                self._send_sse(
+                    "result",
+                    json.dumps({
+                        "text": result_text or "No response generated.",
+                        "cost": cost,
+                        "sessionId": new_session_id,
+                        "sources": sources_read,
+                    }),
+                )
+                self._send_sse("done", "{}")
+                return
+
             options = ClaudeAgentOptions(
                 model=MODEL,
-                allowed_tools=["Read", "Glob", "Grep"],
+                allowed_tools=["Read"],
                 setting_sources=["project"],
                 permission_mode="default",
                 cwd=cwd,
-                max_turns=20,
+                max_turns=8,
             )
+            if resume_token:
+                options.resume = resume_token
 
-            if session_id:
-                resume_token = _load_session(session_id)
-                if resume_token:
-                    options.resume = resume_token
+            wiki_index = ""
+            index_path = PROJECT_ROOT / "wiki" / "index.md"
+            try:
+                wiki_index = index_path.read_text()
+            except OSError:
+                pass
 
-            prompt = f"""Answer the following question using the Team Pulse wiki.
-Read wiki/index.md first to find relevant articles, then read those articles to answer.
+            if wiki_index:
+                prompt = f"""Answer the following question using the Team Pulse wiki.
+The wiki index is included below, so do not read wiki/index.md again.
+Use the index to identify the 2-4 most relevant articles.
+Read only those articles unless you need one extra source to resolve ambiguity.
+Keep the answer concise, factual, and management-friendly.
+Stop reading once you have enough evidence and produce the final answer within this request.
+
+Wiki index:
+{wiki_index}
+
+Question: {question}"""
+            else:
+                prompt = f"""Answer the following question using the Team Pulse wiki.
+Read wiki/index.md first to identify the 2-4 most relevant articles.
+Read only those articles unless you need one extra source to resolve ambiguity.
+Keep the answer concise, factual, and management-friendly.
+Stop reading once you have enough evidence and produce the final answer within this request.
 
 Question: {question}"""
 
-            result_text = ""
-            new_session_id = None
-            sources_read: list[str] = []
+            send_progress(
+                "Loaded wiki index..." if wiki_index else "Starting Team Pulse research..."
+            )
 
             async for message in query(prompt=prompt, options=options):
                 if isinstance(message, SystemMessage):
@@ -317,13 +536,18 @@ Question: {question}"""
                         sid = message.data.get("session_id")
                         if sid:
                             new_session_id = sid
+                            send_progress("Reading the team wiki...")
 
                 if isinstance(message, AssistantMessage):
                     # Track Read tool calls for source citations
                     if hasattr(message, "content"):
                         for block in getattr(message, "content", []):
-                            if hasattr(block, "name") and block.name == "Read":
-                                file_path = getattr(block, "input", {}).get("file_path", "")
+                            block_name = getattr(block, "name", "")
+                            if block_name == "Read":
+                                block_input = getattr(block, "input", {})
+                                file_path = ""
+                                if isinstance(block_input, dict):
+                                    file_path = block_input.get("file_path", "")
                                 if "wiki/" in file_path and file_path not in sources_read:
                                     # Extract relative path from wiki/
                                     wiki_idx = file_path.find("wiki/")
@@ -331,10 +555,17 @@ Question: {question}"""
                                         rel = file_path[wiki_idx:]
                                         if rel not in sources_read:
                                             sources_read.append(rel)
+                                        if rel == "wiki/index.md":
+                                            send_progress("Scanning wiki index...")
+                                        else:
+                                            send_progress(f"Reading {rel}...")
+                            elif block_name in {"Glob", "Grep"}:
+                                send_progress("Finding the most relevant wiki articles...")
 
                 if isinstance(message, ResultMessage):
                     result_text = message.result or ""
                     cost = message.total_cost_usd or 0.0
+                    send_progress("Drafting the summary...")
                     if new_session_id and hasattr(message, "session_id"):
                         _save_session(new_session_id, message.session_id)
                     self._send_sse(

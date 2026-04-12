@@ -2,3 +2,6 @@
 .venv/
 __pycache__/
 *.pyc
+
+# Ask server session resume tokens (local only)
+outputs/.sessions/

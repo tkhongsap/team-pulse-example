@@ -1,13 +1,16 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
+import { getServerSession, type Session } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { checkRateLimit, incrementUsage } from "@/lib/rate-limit";
+import { getFastAskAnswer } from "@/lib/ask-fast-path";
 
 const ASK_SERVER_URL = process.env.ASK_SERVER_URL || "http://localhost:3001";
 
-function resolveUserId(session: Awaited<ReturnType<typeof getServerSession>>, request: Request): string {
-  if (session?.user) {
-    return (session.user as Record<string, unknown>).id as string || session.user.email || "anonymous";
+function resolveUserId(session: Session | null, request: Request): string {
+  const user = session?.user as (Session["user"] & { id?: string }) | undefined;
+
+  if (user) {
+    return user.id || user.email || "anonymous";
   }
   const clientId = request.headers.get("X-Team-Pulse-Id");
   return clientId ? `anon:${clientId}` : "anon:shared";
@@ -39,8 +42,27 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Missing question" }, { status: 400 });
   }
 
+  const fastAnswer = getFastAskAnswer(question);
+
   // Increment usage before making the request
   incrementUsage(userId);
+
+  if (fastAnswer) {
+    return NextResponse.json(
+      {
+        text: fastAnswer.text,
+        sources: fastAnswer.sources,
+        sessionId: sessionId || null,
+        strategy: fastAnswer.strategy,
+      },
+      {
+        headers: {
+          "X-RateLimit-Remaining": String(remaining - 1),
+          "X-RateLimit-Limit": "100",
+        },
+      }
+    );
+  }
 
   try {
     const response = await fetch(`${ASK_SERVER_URL}/ask`, {
@@ -61,7 +83,6 @@ export async function POST(request: Request) {
       headers: {
         "Content-Type": "text/event-stream",
         "Cache-Control": "no-cache",
-        Connection: "keep-alive",
         "X-RateLimit-Remaining": String(remaining - 1),
         "X-RateLimit-Limit": "100",
       },
