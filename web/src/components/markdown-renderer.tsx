@@ -116,7 +116,9 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
           ),
           hr: (props) => <hr className="my-4 border-border" {...props} />,
         }}
-      />
+      >
+        {content}
+      </ReactMarkdown>
     </div>
   );
 }

@@ -18,6 +18,7 @@ export function Chat() {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [sessionId, setSessionId] = useState<string | null>(null);
+  const [loadingStatus, setLoadingStatus] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -52,21 +53,41 @@ export function Chat() {
     setMessages((prev) => [...prev, userMessage]);
     setInput("");
     setIsLoading(true);
+    setLoadingStatus("Contacting Team Pulse...");
 
     const assistantId = crypto.randomUUID();
+    let renderedAssistant = false;
+    let streamParseFailed = false;
 
-    function setAssistantMessage(content: string, sources?: string[]) {
+    function setAssistantMessage(
+      content: string,
+      options: { sources?: string[]; replaceIfExists?: boolean } = {}
+    ) {
+      const { sources, replaceIfExists = true } = options;
+      renderedAssistant = true;
       setMessages((prev) => {
         const msg: Message = {
           id: assistantId,
           role: "assistant",
           content,
-          ...(sources ? { sources } : {}),
+          ...(sources !== undefined ? { sources } : {}),
         };
         const idx = prev.findIndex((m) => m.id === assistantId);
         if (idx >= 0) {
+          if (!replaceIfExists) {
+            return prev;
+          }
+          const existing = prev[idx];
           const copy = prev.slice();
-          copy[idx] = msg;
+          copy[idx] = {
+            ...existing,
+            ...msg,
+            ...(sources !== undefined
+              ? { sources }
+              : existing.sources
+                ? { sources: existing.sources }
+                : {}),
+          };
           return copy;
         }
         return [...prev, msg];
@@ -86,7 +107,7 @@ export function Chat() {
       if (!response.ok) {
         const err = await response.json().catch(() => ({ error: "Request failed" }));
         setAssistantMessage(`Error: ${err.error || "Request failed"}`);
-        setIsLoading(false);
+        setLoadingStatus(null);
         return;
       }
 
@@ -94,10 +115,12 @@ export function Chat() {
 
       if (contentType.includes("text/event-stream") && response.body) {
         // SSE streaming
+        setLoadingStatus("Analyzing the team wiki...");
         const reader = response.body.getReader();
         const decoder = new TextDecoder();
         let buffer = "";
         let currentEvent = "";
+        let streamCompleted = false;
 
         while (true) {
           const { done, value } = await reader.read();
@@ -106,15 +129,34 @@ export function Chat() {
           buffer += decoder.decode(value, { stream: true });
           const lines = buffer.split("\n");
           buffer = lines.pop() || "";
-          for (const line of lines) {
+          for (const rawLine of lines) {
+            const line = rawLine.replace(/\r$/, "");
+            if (!line) {
+              currentEvent = "";
+              continue;
+            }
+
             if (line.startsWith("event: ")) {
               currentEvent = line.slice(7);
             } else if (line.startsWith("data: ")) {
               const data = line.slice(6);
               try {
                 const parsed = JSON.parse(data);
-                if (currentEvent === "result" && parsed.text) {
-                  setAssistantMessage(parsed.text, parsed.sources || []);
+                if (currentEvent === "result") {
+                  const text =
+                    typeof parsed.text === "string" && parsed.text.trim()
+                      ? parsed.text
+                      : "No response generated.";
+                  const sources =
+                    Array.isArray(parsed.sources)
+                      ? parsed.sources.filter(
+                          (source: unknown): source is string =>
+                            typeof source === "string"
+                        )
+                      : undefined;
+
+                  setAssistantMessage(text, { sources });
+                  setLoadingStatus(null);
                   if (parsed.sessionId) {
                     setSessionId(parsed.sessionId);
                     sessionStorage.setItem(
@@ -123,24 +165,76 @@ export function Chat() {
                     );
                   }
                 } else if (currentEvent === "error" && parsed.error) {
-                  setAssistantMessage(`Error: ${parsed.error}`);
+                  const errorText =
+                    typeof parsed.error === "string" && parsed.error.trim()
+                      ? parsed.error
+                      : "Something went wrong while generating a response.";
+                  setAssistantMessage(`Error: ${errorText}`, {
+                    replaceIfExists: false,
+                  });
+                  setLoadingStatus(`Error: ${errorText}`);
+                } else if (currentEvent === "progress") {
+                  const status =
+                    typeof parsed.status === "string" && parsed.status.trim()
+                      ? parsed.status
+                      : typeof parsed.message === "string" && parsed.message.trim()
+                        ? parsed.message
+                        : "Working through the team wiki...";
+                  setLoadingStatus(status);
+                } else if (currentEvent === "done") {
+                  streamCompleted = true;
+                  setLoadingStatus(null);
+                  break;
                 }
               } catch {
-                // Skip invalid JSON
+                streamParseFailed = true;
               }
             }
           }
+
+          if (streamCompleted) {
+            await reader.cancel().catch(() => undefined);
+            break;
+          }
+        }
+
+        if (!renderedAssistant) {
+          setAssistantMessage(
+            streamParseFailed
+              ? "Received a malformed response from the ask server. Please try again."
+              : "No response received from the ask server."
+          );
         }
       } else {
-        const data = await response.json();
-        setAssistantMessage(data.error || data.text || "No response");
+        const data = await response
+          .json()
+          .catch(
+            () =>
+              null as {
+                error?: string;
+                text?: string;
+                sources?: string[];
+                sessionId?: string | null;
+              } | null
+          );
+
+        if (data?.sessionId) {
+          setSessionId(data.sessionId);
+          sessionStorage.setItem("teamPulseSessionId", data.sessionId);
+        }
+
+        setAssistantMessage(data?.error || data?.text || "No response", {
+          sources: Array.isArray(data?.sources) ? data.sources : undefined,
+        });
       }
     } catch {
       setAssistantMessage(
-        "Could not connect to the ask server. Start it with: `python3 scripts/ask_server.py`"
+        "Could not connect to the ask server. Start it with: `python3 scripts/ask_server.py`",
+        { replaceIfExists: false }
       );
     } finally {
       setIsLoading(false);
+      setLoadingStatus(null);
     }
   };
 
@@ -224,6 +318,9 @@ export function Chat() {
                   <span className="w-2 h-2 rounded-full bg-muted-foreground/40 animate-bounce [animation-delay:150ms]" />
                   <span className="w-2 h-2 rounded-full bg-muted-foreground/40 animate-bounce [animation-delay:300ms]" />
                 </div>
+                <p className="mt-2 text-xs text-muted-foreground">
+                  {loadingStatus || "Working through the team wiki..."}
+                </p>
               </div>
             </div>
           )}
