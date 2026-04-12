@@ -55,6 +55,24 @@ export function Chat() {
 
     const assistantId = crypto.randomUUID();
 
+    function setAssistantMessage(content: string, sources?: string[]) {
+      setMessages((prev) => {
+        const msg: Message = {
+          id: assistantId,
+          role: "assistant",
+          content,
+          ...(sources ? { sources } : {}),
+        };
+        const idx = prev.findIndex((m) => m.id === assistantId);
+        if (idx >= 0) {
+          const copy = prev.slice();
+          copy[idx] = msg;
+          return copy;
+        }
+        return [...prev, msg];
+      });
+    }
+
     try {
       const response = await fetch("/api/ask", {
         method: "POST",
@@ -67,14 +85,7 @@ export function Chat() {
 
       if (!response.ok) {
         const err = await response.json().catch(() => ({ error: "Request failed" }));
-        setMessages((prev) => [
-          ...prev,
-          {
-            id: assistantId,
-            role: "assistant",
-            content: `Error: ${err.error || "Request failed"}`,
-          },
-        ]);
+        setAssistantMessage(`Error: ${err.error || "Request failed"}`);
         setIsLoading(false);
         return;
       }
@@ -86,6 +97,7 @@ export function Chat() {
         const reader = response.body.getReader();
         const decoder = new TextDecoder();
         let buffer = "";
+        let currentEvent = "";
 
         while (true) {
           const { done, value } = await reader.read();
@@ -94,8 +106,6 @@ export function Chat() {
           buffer += decoder.decode(value, { stream: true });
           const lines = buffer.split("\n");
           buffer = lines.pop() || "";
-
-          let currentEvent = "";
           for (const line of lines) {
             if (line.startsWith("event: ")) {
               currentEvent = line.slice(7);
@@ -104,26 +114,7 @@ export function Chat() {
               try {
                 const parsed = JSON.parse(data);
                 if (currentEvent === "result" && parsed.text) {
-                  const sources: string[] = parsed.sources || [];
-                  setMessages((prev) => {
-                    const existing = prev.find((m) => m.id === assistantId);
-                    if (existing) {
-                      return prev.map((m) =>
-                        m.id === assistantId
-                          ? { ...m, content: parsed.text, sources }
-                          : m
-                      );
-                    }
-                    return [
-                      ...prev,
-                      {
-                        id: assistantId,
-                        role: "assistant" as const,
-                        content: parsed.text,
-                        sources,
-                      },
-                    ];
-                  });
+                  setAssistantMessage(parsed.text, parsed.sources || []);
                   if (parsed.sessionId) {
                     setSessionId(parsed.sessionId);
                     sessionStorage.setItem(
@@ -131,6 +122,8 @@ export function Chat() {
                       parsed.sessionId
                     );
                   }
+                } else if (currentEvent === "error" && parsed.error) {
+                  setAssistantMessage(`Error: ${parsed.error}`);
                 }
               } catch {
                 // Skip invalid JSON
@@ -139,27 +132,13 @@ export function Chat() {
           }
         }
       } else {
-        // JSON response (fallback when server not available)
         const data = await response.json();
-        setMessages((prev) => [
-          ...prev,
-          {
-            id: assistantId,
-            role: "assistant",
-            content: data.error || data.text || "No response",
-          },
-        ]);
+        setAssistantMessage(data.error || data.text || "No response");
       }
     } catch {
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: assistantId,
-          role: "assistant",
-          content:
-            "Could not connect to the ask server. Start it with: `python3 scripts/ask_server.py`",
-        },
-      ]);
+      setAssistantMessage(
+        "Could not connect to the ask server. Start it with: `python3 scripts/ask_server.py`"
+      );
     } finally {
       setIsLoading(false);
     }
