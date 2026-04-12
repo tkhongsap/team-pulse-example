@@ -14,31 +14,18 @@ import argparse
 import subprocess
 import sys
 import time
-from datetime import datetime, timedelta, timezone
-from pathlib import Path
 
-# Project root (parent of scripts/)
-PROJECT_ROOT = Path(__file__).resolve().parent.parent
-SCRIPTS_DIR = PROJECT_ROOT / "scripts"
+from config import PROJECT_ROOT, SCRIPTS_DIR, RAW_DIR, WIKI_LOG, now_local
+
 PIPELINE_LOG = SCRIPTS_DIR / "pipeline.log"
-RAW_DIR = PROJECT_ROOT / "raw" / "github-daily"
-WIKI_LOG = PROJECT_ROOT / "wiki" / "log.md"
-
-# Bangkok timezone (ICT = UTC+7)
-TZ_BANGKOK = timezone(timedelta(hours=7))
 
 # Report type mapping
 REPORT_TYPE = {"am": "morning", "pm": "eod"}
 
 
-def now_bangkok() -> datetime:
-    """Current datetime in Bangkok timezone."""
-    return datetime.now(TZ_BANGKOK)
-
-
 def log(msg: str) -> None:
     """Print and append to pipeline log."""
-    timestamp = now_bangkok().strftime("%Y-%m-%d %H:%M:%S")
+    timestamp = now_local().strftime("%Y-%m-%d %H:%M:%S")
     line = f"[{timestamp}] {msg}"
     print(line)
     with open(PIPELINE_LOG, "a") as f:
@@ -137,7 +124,7 @@ def run_pipeline(period: str, date: str) -> None:
     # Step 4: Git commit and push
     elapsed = run_step(
         "Git add",
-        ["git", "add", "-A"],
+        ["git", "add", "wiki/", "outputs/", "raw/"],
     )
 
     # Check if there are changes to commit
@@ -196,7 +183,7 @@ def main() -> None:
     )
     args = parser.parse_args()
 
-    date = args.date or now_bangkok().strftime("%Y-%m-%d")
+    date = args.date or now_local().strftime("%Y-%m-%d")
 
     try:
         run_pipeline(args.period, date)

@@ -16,18 +16,13 @@ import asyncio
 import os
 import sys
 import time
-from datetime import datetime, timedelta, timezone
-from pathlib import Path
+from datetime import datetime, timedelta
 
 from dotenv import load_dotenv
 
 from claude_agent_sdk import ClaudeAgentOptions, ResultMessage, query
 
-# Project root (parent of scripts/)
-PROJECT_ROOT = Path(__file__).resolve().parent.parent
-
-# Bangkok timezone (ICT = UTC+7)
-TZ_BANGKOK = timezone(timedelta(hours=7))
+from config import PROJECT_ROOT, today_local
 
 
 def load_env() -> None:
@@ -42,9 +37,6 @@ def load_env() -> None:
         sys.exit(1)
 
 
-def today_bangkok() -> str:
-    """Return today's date string in Bangkok timezone."""
-    return datetime.now(TZ_BANGKOK).strftime("%Y-%m-%d")
 
 
 def build_morning_prompt(date: str) -> str:
@@ -202,7 +194,7 @@ async def run_report(report_type: str, date: str) -> None:
         options=ClaudeAgentOptions(
             allowed_tools=["Read", "Glob", "Grep", "Write"],
             setting_sources=["project"],
-            permission_mode="bypassPermissions",
+            permission_mode="acceptEdits",
             cwd=str(PROJECT_ROOT),
             max_turns=30,
         ),
@@ -248,7 +240,7 @@ def main() -> None:
     )
     args = parser.parse_args()
 
-    date = args.date or today_bangkok()
+    date = args.date or today_local()
 
     asyncio.run(run_report(args.type, date))
 

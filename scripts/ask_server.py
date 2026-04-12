@@ -17,17 +17,35 @@ import os
 import sys
 import time
 from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
-from pathlib import Path
-from threading import Thread
 
 from dotenv import load_dotenv
 
-# Project root (parent of scripts/)
-PROJECT_ROOT = Path(__file__).resolve().parent.parent
+from config import PROJECT_ROOT, SESSIONS_DIR
+
 load_dotenv(PROJECT_ROOT / ".env")
 
-# Session storage (in-memory for v1)
-sessions: dict[str, str] = {}
+# Session storage — persisted to outputs/.sessions/{sessionId}.json
+SESSIONS_DIR.mkdir(parents=True, exist_ok=True)
+
+
+def _load_session(session_id: str) -> str | None:
+    """Load a session resume token from disk, or None if not found."""
+    path = SESSIONS_DIR / f"{session_id}.json"
+    if path.exists():
+        try:
+            return json.loads(path.read_text()).get("resume")
+        except (json.JSONDecodeError, OSError):
+            return None
+    return None
+
+
+def _save_session(session_id: str, resume_token: str) -> None:
+    """Persist a session resume token to disk."""
+    path = SESSIONS_DIR / f"{session_id}.json"
+    try:
+        path.write_text(json.dumps({"session_id": session_id, "resume": resume_token}))
+    except OSError:
+        pass
 
 SERVER_START = time.time()
 
@@ -267,21 +285,20 @@ def create_handler(project_root: str):
                 AssistantMessage,
                 SystemMessage,
                 query,
-                ContentBlock,
-                ToolUseBlock,
-                ToolResultBlock,
             )
 
             options = ClaudeAgentOptions(
                 allowed_tools=["Read", "Glob", "Grep"],
                 setting_sources=["project"],
-                permission_mode="bypassPermissions",
+                permission_mode="default",
                 cwd=cwd,
                 max_turns=20,
             )
 
-            if session_id and session_id in sessions:
-                options.resume = sessions[session_id]
+            if session_id:
+                resume_token = _load_session(session_id)
+                if resume_token:
+                    options.resume = resume_token
 
             prompt = f"""Answer the following question using the Team Pulse wiki.
 Read wiki/index.md first to find relevant articles, then read those articles to answer.
@@ -317,6 +334,8 @@ Question: {question}"""
                 if isinstance(message, ResultMessage):
                     result_text = message.result or ""
                     cost = message.total_cost_usd or 0.0
+                    if new_session_id and hasattr(message, "session_id"):
+                        _save_session(new_session_id, message.session_id)
                     self._send_sse(
                         "result",
                         json.dumps({

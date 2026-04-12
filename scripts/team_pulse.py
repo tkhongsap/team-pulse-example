@@ -24,13 +24,15 @@ import json
 import os
 import subprocess
 import sys
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 from pathlib import Path
 
 from dotenv import load_dotenv
 
+from config import PROJECT_ROOT, TZ as TZ_BANGKOK
+
 # Load .env from project root
-load_dotenv(Path(__file__).resolve().parent.parent / ".env")
+load_dotenv(PROJECT_ROOT / ".env")
 
 # ── Config ───────────────────────────────────────────────────���────────
 DEFAULT_REPOS = [
@@ -45,11 +47,8 @@ def _get_repos_from_env() -> list[str] | None:
         return [r.strip() for r in env_repos.split(",") if r.strip()]
     return None
 STUCK_THRESHOLD_DAYS = 3
-OUTPUT_DIR = Path(__file__).resolve().parent.parent / "raw" / "github-daily"
+OUTPUT_DIR = PROJECT_ROOT / "raw" / "github-daily"
 PER_PAGE = 100  # max items per API page
-
-# Bangkok timezone (ICT = UTC+7)
-TZ_BANGKOK = timezone(timedelta(hours=7))
 
 PERIOD_CONFIG = {
     "am": {
