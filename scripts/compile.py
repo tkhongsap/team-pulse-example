@@ -17,16 +17,12 @@ import re
 import sys
 import time
 from datetime import datetime, timedelta
-from pathlib import Path
 
 from dotenv import load_dotenv
 
 from claude_agent_sdk import ClaudeAgentOptions, ResultMessage, query
 
-# Project root (parent of scripts/)
-PROJECT_ROOT = Path(__file__).resolve().parent.parent
-RAW_DIR = PROJECT_ROOT / "raw" / "github-daily"
-WIKI_LOG = PROJECT_ROOT / "wiki" / "log.md"
+from config import PROJECT_ROOT, RAW_DIR, WIKI_LOG, COMPILE_LOCK
 
 
 def load_env() -> None:
@@ -140,13 +136,30 @@ def build_prompt(uncompiled_files: list[str]) -> str:
 """
 
 
-async def run_compile(date_filter: str | None = None) -> None:
+async def run_compile(date_filter: str | None = None, force: bool = False) -> None:
     """Main compilation workflow."""
     load_env()
 
     print("Team Pulse — Wiki Compilation")
     print(f"Project root: {PROJECT_ROOT}")
     print()
+
+    # Lock file guard — prevents partial wiki state from a crashed prior run
+    if COMPILE_LOCK.exists():
+        if force:
+            print(f"Warning: Stale lock file found at {COMPILE_LOCK}. Proceeding (--force).")
+            COMPILE_LOCK.unlink()
+        else:
+            print(
+                f"Error: Lock file exists at {COMPILE_LOCK}",
+                file=sys.stderr,
+            )
+            print(
+                "A previous compile may have been interrupted. Inspect wiki/ for partial state,",
+                file=sys.stderr,
+            )
+            print("then remove the lock file or re-run with --force.", file=sys.stderr)
+            sys.exit(1)
 
     # Find uncompiled files
     uncompiled = find_uncompiled(date_filter)
@@ -172,19 +185,24 @@ async def run_compile(date_filter: str | None = None) -> None:
     result_text = ""
     total_cost = 0.0
 
-    async for message in query(
-        prompt=prompt,
-        options=ClaudeAgentOptions(
-            allowed_tools=["Read", "Write", "Edit", "Glob", "Grep"],
-            setting_sources=["project"],
-            permission_mode="bypassPermissions",
-            cwd=str(PROJECT_ROOT),
-            max_turns=50,
-        ),
-    ):
-        if isinstance(message, ResultMessage):
-            result_text = message.result or ""
-            total_cost = message.total_cost_usd or 0.0
+    COMPILE_LOCK.write_text(f"locked at {time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime())}\n")
+    try:
+        async for message in query(
+            prompt=prompt,
+            options=ClaudeAgentOptions(
+                allowed_tools=["Read", "Write", "Edit", "Glob", "Grep"],
+                setting_sources=["project"],
+                permission_mode="acceptEdits",
+                cwd=str(PROJECT_ROOT),
+                max_turns=50,
+            ),
+        ):
+            if isinstance(message, ResultMessage):
+                result_text = message.result or ""
+                total_cost = message.total_cost_usd or 0.0
+    finally:
+        if COMPILE_LOCK.exists():
+            COMPILE_LOCK.unlink()
 
     elapsed = time.time() - start_time
 
@@ -217,9 +235,14 @@ def main() -> None:
         default=None,
         help="Optional date filter (YYYY-MM-DD). Compiles only that date's files.",
     )
+    parser.add_argument(
+        "--force",
+        action="store_true",
+        help="Ignore a stale lock file and proceed anyway.",
+    )
     args = parser.parse_args()
 
-    asyncio.run(run_compile(args.date))
+    asyncio.run(run_compile(args.date, force=args.force))
 
 
 if __name__ == "__main__":
