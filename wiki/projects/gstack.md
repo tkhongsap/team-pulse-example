@@ -11,36 +11,38 @@ sources:
   - "raw/github-daily/2026-04-10-am.md"
   - "raw/github-daily/2026-04-11-am.md"
 created: 2026-04-11
-updated: 2026-04-11
+updated: 2026-04-12
 ---
 
 # gstack
 
-Repository: [garrytan/gstack](https://github.com/garrytan/gstack). TypeScript-based AI agent toolkit with 69K+ stars and 9.7K forks. High community engagement with a sole maintainer bottleneck.
+Repository: [garrytan/gstack](https://github.com/garrytan/gstack). TypeScript-based AI agent toolkit with 69K+ stars and 9.7K forks. High community engagement with a sole maintainer bottleneck. **ESCALATING: 66 open PRs (Apr 12), 27+ stuck, zero merges in 24 hours.**
 
 ## Key Points
 
-- 54 open PRs as of Apr 11, growing steadily throughout the week
-- Sole maintainer: [[contributors/garrytan]] — only person merging PRs or pushing to default branch
-- 19 stuck PRs (>3d, no reviewer) as of Apr 11, up from ~10 at start of week
-- 9 PRs merged during Apr 4-11, all by garrytan
-- Active community: 108+ unique PR authors during the observation period
-- Major areas of contribution: browse module fixes, host support, skill additions, security patches
+- 66 open PRs as of Apr 12 (up from 54 on Apr 11) — inflow accelerating
+- Sole maintainer: [[contributors/garrytan]] — only person merging PRs; **inactive on Apr 12**
+- 27+ stuck PRs (>3d, no reviewer) as of Apr 12, up from 19 on Apr 11 (+42% in 24h)
+- 9 PRs merged during Apr 4-11, all by garrytan; **zero merges Apr 11-12**
+- 3 new PRs opened Apr 12 (xogjs #981, guos88065-tech #979, others)
+- Active community: 100+ unique PR authors (growing)
+- Major areas: browse module fixes, host support, skill additions, security patches
 
-## Health Trajectory (Apr 4-11)
+## Health Trajectory (Apr 4-12)
 
-| Date | Commits | PRs Opened | PRs Merged | Stuck PRs |
-|------|---------|------------|------------|-----------|
-| Apr 4 | 4 | 1 | 0 | ~10 |
-| Apr 5 | 11 | 5 | 0 | ~11 |
-| Apr 6 | 8 | 10 | 2 | ~12 |
-| Apr 7 | 2 | 17 | 2 | ~14 |
-| Apr 8 | 3 | 22 | 3 | ~15 |
-| Apr 9 | 1 | 16 | 1 | ~17 |
-| Apr 10 | 0 | 12 | 0 | ~19 |
-| Apr 11 | 1 | 3 | 1 | 19 |
+| Date | Commits | PRs Opened | PRs Merged | Stuck PRs | Status |
+|------|---------|------------|------------|-----------|--------|
+| Apr 4 | 4 | 1 | 0 | ~10 | Baseline |
+| Apr 5 | 11 | 5 | 0 | ~11 | Inflow rising |
+| Apr 6 | 8 | 10 | 2 | ~12 | Merge catches up |
+| Apr 7 | 2 | 17 | 2 | ~14 | Gap widens |
+| Apr 8 | 3 | 22 | 3 | ~15 | Inflow peaks |
+| Apr 9 | 1 | 16 | 1 | ~17 | Stuck accelerates |
+| Apr 10 | 0 | 12 | 0 | ~19 | Zero commits |
+| Apr 11 | 1 | 3 | 1 | 19 | Stabilized |
+| Apr 12 | 0 | 3 | 0 | 27+ | **CRITICAL: inactivity + stuck spike** |
 
-PR inflow consistently exceeds merge throughput. The gap widens each day.
+PR inflow consistently exceeds merge throughput. Gap has widened significantly.
 
 ## Key Issues
 
