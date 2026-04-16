@@ -5,71 +5,69 @@ connects:
   - "patterns/review-bottleneck"
   - "patterns/stuck-items-growth"
   - "patterns/burnout-signals"
+  - "patterns/community-disengagement"
 sources:
   - "raw/github-daily/2026-04-04-am.md"
   - "raw/github-daily/2026-04-11-am.md"
   - "raw/github-daily/2026-04-12-am.md"
+  - "raw/github-daily/2026-04-13-am.md"
+  - "raw/github-daily/2026-04-14-am.md"
+  - "raw/github-daily/2026-04-15-am.md"
+  - "raw/github-daily/2026-04-16-am.md"
 created: 2026-04-11
-updated: 2026-04-12
+updated: 2026-04-16
 ---
 
 # Connection: Sole Maintainer, Burnout, and System Collapse
 
 ## The Connection
 
-The single-maintainer model in both repos creates a reinforcing cycle that has now reached critical breaking point: sole reviewer overloaded → works late nights → stuck items accumulate → burnout intensifies → maintainer becomes inactive → system completely stalls. **This cycle completed in 9 days (Apr 4-12).**
+The single-maintainer model creates a reinforcing cycle that has now progressed through all stages: overwork → burnout → withdrawal → selective re-engagement (self-only) → community disengagement. **The system did not recover when the maintainer returned** because he returned in a degraded mode that excludes community review.
 
-## Key Insight: System Collapse Timeline
+## Extended Cycle (Apr 4-16)
 
-This is a **structural system failure**, not a contributor problem. Both repos have active communities submitting quality PRs. The bottleneck was review capacity (garrytan) — not contribution quality. The system hit its breaking point on Apr 12.
+1. **Apr 4-9 (Overwork)**: Community submits 15-20 PRs/day. garrytan merges 1-2/day, works late nights. Stuck items grow 2-5/day.
+2. **Apr 10-12 (Burnout → Withdrawal)**: garrytan goes silent. Stuck PRs spike from 53 to 66. System at 66% stuck.
+3. **Apr 13-14 (Selective Re-engagement)**: garrytan returns but ONLY self-merges. Committed security wave v0.16.4.0 (bundled 7 community contributors' fixes into own PR) and UX foundations v0.17.0.0. Zero community PR reviews.
+4. **Apr 15 (Feature Sprint)**: Opened v0.18.0.0 PR. Third version in 3 days. Still zero community reviews. Stuck hits 75 (77%).
+5. **Apr 16 (Community Gives Up)**: Zero activity across both repos. First day with no new PRs, commits, or issues. Stuck at 78 (80%). Community disengagement begins.
 
-**The cycle:**
-1. **Apr 4-7**: Community submits ~15-20 PRs/day. garrytan merges ~2/day, works normal hours. Stuck items grow slowly (~2-3/day).
-2. **Apr 8-11**: Inflow peaks (~20+ PRs/day). garrytan increases late-night work (10+ after-hours commits in 5 days). Merges stall (1/day). Stuck items accelerate (~4-5/day).
-3. **Apr 11 midnight**: garrytan completes last merge + refactor commit (03:13 UTC). System at 53 stuck PRs (57% of total).
-4. **Apr 12**: garrytan goes completely inactive. Zero commits, zero reviews. Without him, autoresearch has zero reviewers. gstack has zero active reviewers. Community continues submitting PRs (3 new ones), but none can be reviewed or merged.
-5. **Result**: Stuck PRs spike 25% in 24 hours (53 → 66). System functionally stalled.
+## Key Insight: Return ≠ Recovery
 
-## Evidence
+The Apr 12 briefing predicted the system would recover if garrytan returned. Instead, garrytan returned in **degraded mode**: productive on personal features but disengaged from community review. This is actually worse than continued absence because:
 
-**Apr 4-11 Period:**
-- gstack: 9 merges in 8 days vs 54 open PRs = 6:1 backlog ratio
-- autoresearch: 0 merges vs 39 open PRs = infinite backlog ratio
-- garrytan late-night commits: 5 of 8 days (10+ commits)
-- Stuck growth: accelerating, 2-5 new stuck items per day, totaling +22 in 8 days
+- It signals the maintainer is capable but choosing not to review
+- Community contributors see new versions being released while their PRs rot
+- The psychological impact on contributors is higher — their work is visibly being ignored, not just delayed
 
-**Apr 12 (Critical Day):**
-- System-wide merges: **0** (garrytan inactive)
-- New PRs opened: 3 (all unreviewed)
-- Stuck PR spike: +13 in 24 hours (+25%)
-- Stuck ratio: 66 / 100 = 66% of all open PRs now stuck
+## Evidence Summary
 
-**Single Point of Failure Impact:**
-- Apr 11: With garrytan active, stuck PRs = 53 (57% of 93 total)
-- Apr 12: Without garrytan, stuck PRs = 66 (66% of 100 total) — 9 percentage point increase in one day
+| Phase | Dates | garrytan Activity | Community Activity | Stuck PRs | Stuck % |
+|-------|-------|-------------------|-------------------|-----------|---------|
+| Overwork | Apr 4-9 | 25 commits, 6 merges, 10 late-night | 60+ PRs opened | 31→40 | 33→41% |
+| Withdrawal | Apr 10-12 | 1 commit, 0 merges | 6 PRs opened | 40→66 | 41→66% |
+| Self-only | Apr 13-14 | 2 commits, 2 self-merges | 17 PRs opened | 66→66 | 59→67% |
+| Fading | Apr 15-16 | 1 PR opened, 0 merges | 8→0 PRs opened | 66→78 | 67→80% |
 
-## Urgent: Intervention Required Within 24 Hours
+## Structural Failures
 
-Per wt-project 4.3 and section 6 (24-hour intervention SLA), this has crossed into **CRITICAL** territory.
+1. **No backup reviewers**: Both repos have exactly one person with merge authority
+2. **No triage automation**: Low-risk PRs (fork additions, translations) require same review as architectural changes
+3. **No SLA enforcement**: wt-project section 6 targets 24h intervention; actual: 5+ days average
+4. **Contribution bundling**: garrytan bundles community fixes into his own PRs rather than merging originals, denying contributors credit and discouraging future submissions
 
-**Immediate actions:**
-1. **Get garrytan status**: Confirm he's okay (burnout concern). If unavailable >24 hours, escalate to management.
-2. **Emergency triage**: Fast-track the ~35 "add fork to notable forks" PRs in autoresearch (auto-mergeable?). This alone could clear ~10-15 stuck items.
-3. **Temporary deputies**: Grant merge access to trusted contributors:
-   - [[contributors/damin-lee]] for gstack (has 4 quality PRs; proven competent)
-   - [[contributors/voidborne-d]] for autoresearch (has 3 quality tokenizer fixes; blocked by same person)
-4. **Security priority lane**: [[contributors/hybirdss]] has 3 security fixes in stuck queue — review these first.
-5. **Auto-merge for docs**: Chinese translation and README updates should not require deep review.
+## Recommended Structural Changes
 
-**Long-term structural fix** (after emergency is over):
-- Add 2-3 co-maintainers with full merge access
-- Establish triage bot for low-risk PRs (translations, fork additions, docs)
-- Set review SLA: triage within 24h, merge within 5 days for non-blocked items
+1. **Immediate**: Grant merge access to 2-3 trusted contributors per repo ([[contributors/voidborne-d]], [[contributors/damin-lee]])
+2. **Short-term**: Auto-merge bot for docs/translation/fork PRs (clears ~15-20 stuck items)
+3. **Medium-term**: Review SLA with escalation path (triage in 24h, decision in 5d)
+4. **Long-term**: Move to maintainer team model — no repo should have a single merge authority
 
 ## Related
 
-- [[patterns/review-bottleneck]] — the throughput gap
-- [[patterns/stuck-items-growth]] — the accumulation effect
-- [[patterns/burnout-signals]] — the human cost
-- [[contributors/garrytan]] — overloaded maintainer
+- [[patterns/review-bottleneck]] — the throughput gap (now behavioral)
+- [[patterns/stuck-items-growth]] — 80% saturation
+- [[patterns/burnout-signals]] — garrytan's behavioral progression
+- [[patterns/community-disengagement]] — end-stage consequence
+- [[contributors/garrytan]] — overloaded then disengaged maintainer
 - [[contributors/karpathy]] — absent maintainer

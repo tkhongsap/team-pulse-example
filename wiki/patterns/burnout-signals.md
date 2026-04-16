@@ -8,39 +8,44 @@ sources:
   - "raw/github-daily/2026-04-07-am.md"
   - "raw/github-daily/2026-04-11-am.md"
   - "raw/github-daily/2026-04-12-am.md"
+  - "raw/github-daily/2026-04-13-am.md"
+  - "raw/github-daily/2026-04-14-am.md"
+  - "raw/github-daily/2026-04-15-am.md"
+  - "raw/github-daily/2026-04-16-am.md"
 created: 2026-04-11
-updated: 2026-04-12
+updated: 2026-04-16
 ---
 
 # Burnout Signals
 
-Late-night commit patterns and sole-maintainer workload indicate burnout risk for [[contributors/garrytan]]. **ESCALATION**: On Apr 12, garrytan became completely inactive (first no-commit day) after 10+ late-night commits in prior week. This suggests acute burnout leading to withdrawal.
+Late-night commit patterns and behavioral shifts indicate burnout progression for [[contributors/garrytan]]. **REVISED ASSESSMENT**: garrytan returned Apr 13 but shifted from community review to solo feature development — a pattern consistent with burnout-driven withdrawal from collaborative work while maintaining personal output.
 
 ## Key Points
 
 - [[contributors/garrytan]] had **10+ late-night commits** (22:00-06:00 UTC) across 5 of 8 days (Apr 4-11)
-- Late-night pattern: Apr 4 (2), Apr 5 (4), Apr 6 (2), Apr 7 (1), Apr 11 (1) — peak on Apr 5-6
-- Apr 11: committed at 03:13 UTC — a v0.16.3.0 refactor, suggesting deep work at night
-- **Apr 12: ZERO activity** — first no-commit day after intensive week. Suggests acute burnout → withdrawal
-- Worked alone handling 54→66 open PRs with zero other reviewers — unsustainable load
-- Stuck PRs exploded 42% on Apr 12 while garrytan was absent → direct correlation
-- No other contributors show burnout signals
+- Apr 11: committed at 03:13 UTC — deep work at night
+- **Apr 12: Complete absence** — first no-commit day after intensive week
+- **Apr 13-14: Returned to solo mode** — committed and self-merged his own PRs, zero community review
+- **Apr 15-16: Intermittent** — opened one PR (Apr 15), then silent (Apr 16)
+- Post-return pattern: feature development (3 version bumps in 3 days) without community engagement
+- This "productive but disengaged" pattern is a recognized burnout indicator — maintainer retreats to solo work to avoid the cognitive load of reviewing others' code
 
 ## Burnout Risk Assessment
 
-| Contributor | Late-Night Commits | Solo Workload | Days Active | Status | Risk Level |
-|-------------|-------------------|---------------|-------------|--------|------------|
-| garrytan | 10+ across 5 days | 66 open PRs, sole reviewer | 7/8, inactive Apr 12 | **Actively burned out** | **CRITICAL** |
-| karpathy | 0 | Inactive (17 days) | 0/9 | Disengaged | Medium |
-| All others | 1 (Apr 8) | No review burden | 1-3 days | Normal | Low |
+| Contributor | Late-Night Commits | Solo Workload | Post-Return Pattern | Risk Level |
+|-------------|-------------------|---------------|---------------------|------------|
+| garrytan | 10+ across 5 days | 98 open PRs, sole reviewer | Self-merge only, zero community review | **HIGH — disengagement phase** |
+| karpathy | 0 | Inactive 21 days | No return | Medium — prolonged absence |
+| All others | 1 (Apr 8) | No review burden | Normal community participation | Low |
 
-**Escalation**: garrytan's inactivity on Apr 12 after intense late-night work pattern strongly suggests acute burnout. Combined with system-wide stall (stuck PRs +25% in 24h), this is a **CRITICAL PERSONNEL AND SYSTEM RISK**.
+## Behavioral Progression
 
-## Recommended Actions (per wt-project 4.3)
+1. **Apr 4-9**: Overwork phase — 10+ late-night commits, handling 50+ PRs alone
+2. **Apr 10-12**: Withdrawal phase — activity drops to near-zero, one brief late-night commit (Apr 11)
+3. **Apr 13-14**: Selective re-engagement — returns but only does self-authored work, avoids community review burden
+4. **Apr 15-16**: Intermittent presence — one PR opened, then silent again
 
-- Flag garrytan's workload to team lead for intervention
-- Consider deputizing trusted contributors (e.g., [[contributors/damin-lee]]) for triage authority
-- Separate security PRs ([[contributors/hybirdss]]) into a priority review lane
+This progression suggests garrytan has not recovered but has adapted by reducing scope to only his own work. The community review queue remains untouched.
 
 ## Related
 

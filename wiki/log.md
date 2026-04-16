@@ -80,3 +80,53 @@ Generated actionable morning briefing for 2026-04-12 leadership team.
   - **Critical window: Next 24 hours (Apr 12 EOD)**
 
 - **Sources:** raw/github-daily/2026-04-12-am.md, wiki/index.md, wiki/contributors/*.md, wiki/patterns/*.md, wiki/connections/*.md, docs/wt-project.md
+
+---
+
+## [2026-04-16] query | Morning briefing generated (2026-04-16-morning-briefing.md)
+
+Generated actionable morning briefing for 2026-04-16 using Apr 12-16 snapshot data (5-day trend analysis).
+
+- **Report:** [[reports/2026-04-16-morning-briefing.md]]
+- **Key findings:**
+  - **CRITICAL**: 78 stuck PRs (80% of 98 open) — system functionally stalled for 5 days
+  - **garrytan**: Day 5 of total inactivity after intense late-night week — burnout watch
+  - **karpathy**: Day 21 of absence — autoresearch has zero reviewers
+  - **Community disengagement**: Apr 16 is the first day with ZERO community activity (no PRs, no commits, no issues)
+  - **Stuck trajectory**: 53 → 66 → 58 → 66 → 75 → 78 over Apr 11-16
+  - **One merge in 5 days** (gstack, Apr 13-14) vs 25+ new PRs opened in same period
+  - **Immediate actions**: Check garrytan status, grant emergency merge access to voidborne-d + Damin-Lee, batch-merge 15 low-risk PRs, priority-lane security fixes
+
+- **Sources:** raw/github-daily/2026-04-12-am.md through raw/github-daily/2026-04-16-am.md, wiki/index.md, wiki/contributors/*.md, wiki/patterns/*.md, wiki/connections/*.md, docs/wt-project.md
+
+---
+
+## [2026-04-16] ingest | Bulk compile Apr 12 PM through Apr 16 PM (9 snapshots)
+
+Compiled 9 new raw snapshots into the wiki. Major narrative revision: garrytan was NOT absent Apr 13-16 — he returned but in self-merge-only mode (3 version releases, zero community PR reviews). New pattern discovered: community disengagement (Apr 16 = zero activity).
+
+- **Articles created (1 new):**
+  - [[patterns/community-disengagement]] — PR inflow dropped from 22/day to 0/day; end-stage signal
+
+- **Articles updated (11 existing):**
+  - [[contributors/garrytan]] — REVISED: returned Apr 13, self-merge only; behavioral shift documented
+  - [[contributors/karpathy]] — updated to 21 days absent, 98% stuck
+  - [[contributors/voidborne-d]] — expanded to gstack (3 new PRs), now 6 total open (most of anyone)
+  - [[contributors/hybirdss]] — old PRs likely resolved via #988 batch; new #1002 pending
+  - [[projects/gstack]] — 58 open PRs, 39 stuck; garrytan self-merging v0.16.4→v0.17.0→v0.18.0
+  - [[projects/autoresearch]] — 40 open, 39 stuck (98%), zero merges, first zero-activity day
+  - [[patterns/review-bottleneck]] — REVISED: bottleneck type shifted from availability to behavioral
+  - [[patterns/burnout-signals]] — REVISED: disengagement phase, not acute burnout; productive but avoids review
+  - [[patterns/stuck-items-growth]] — extended to 78 stuck (80%); added Resolutions section (3 items resolved via batch merge, avg 5d TTU)
+  - [[connections/sole-maintainer-and-stuck-growth]] — added "Return ≠ Recovery" analysis; self-merge-only mode is worse than absence
+  - [[index.md]] — updated all summaries, added community-disengagement, updated reports
+
+- **Key findings (revised from Apr 12 assessment):**
+  - garrytan returned Apr 13 but shifted to self-merge-only — zero community reviews
+  - Released v0.16.4.0, v0.17.0.0, v0.18.0.0 in 3 days while 78 community PRs went unreviewed
+  - 3 stuck items resolved (Hybirdss security PRs bundled into #988) — only 3 resolutions in 13 days
+  - Stuck PRs at 80% saturation (78/98) — approaching ceiling
+  - Community disengagement: Apr 16 = first day with zero activity across both repos
+  - Previous projection was "100% stalled by Apr 14" — actual: 80% by Apr 16 (slower but unrecovered)
+
+- **Sources processed:** raw/github-daily/2026-04-12-pm.md through raw/github-daily/2026-04-16-pm.md (9 files)
