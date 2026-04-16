@@ -10,18 +10,19 @@ sources:
   - "raw/github-daily/2026-04-09-am.md"
   - "raw/github-daily/2026-04-11-am.md"
 created: 2026-04-11
-updated: 2026-04-11
+updated: 2026-04-12
 ---
 
 # garrytan
 
-Sole maintainer of [[projects/gstack]]. The most active contributor across the observation period (Apr 4-11), with 204 total contributions to the gstack repo. Consistently the only person merging PRs and pushing commits to the default branch.
+Sole maintainer of [[projects/gstack]]. The most active contributor across the observation period (Apr 4-12), with 25+ commits and 9 merges. **CRITICAL: Zero commits on Apr 12 — first day of inactivity — while stuck PRs escalated 25% in 24 hours.**
 
 ## Key Points
 
 - 25+ commits to gstack default branch during Apr 4-11, with 10+ late-night commits (22:00-06:00 UTC)
 - Sole merge authority: merged PRs on Apr 6 (2), Apr 7 (2), Apr 8 (3), Apr 9 (1), Apr 11 (1) — total 9 merges
-- Responsible for reviewing 54+ open PRs with zero other reviewers active
+- **No activity on Apr 12** — stuck PRs grew from 19 to 27+ without intervention
+- Responsible for reviewing 100+ open PRs across both repos with zero other reviewers active
 - Late-night commit pattern: Apr 4 (2), Apr 5 (4), Apr 6 (2), Apr 7 (1), Apr 11 (1) — see [[patterns/burnout-signals]]
 - Notable commits: "refactor: AI slop reduction with cross-model quality review (v0.16.3.0)" at 03:13 UTC on Apr 11
 
@@ -37,6 +38,7 @@ Sole maintainer of [[projects/gstack]]. The most active contributor across the o
 | Apr 9 | 1 | 2 | 1 | 0 |
 | Apr 10 | 0 | 0 | 0 | 0 |
 | Apr 11 | 1 | 0 | 1 | 1 |
+| Apr 12 | 0 | 0 | 0 | — |
 
 ## Related
 
