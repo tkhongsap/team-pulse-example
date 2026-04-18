@@ -36,6 +36,40 @@ export function getReportDates(): { date: string; types: string[] }[] {
     .sort((a, b) => b.date.localeCompare(a.date));
 }
 
+export interface LatestReport {
+  date: string;
+  type: string;
+  content: string;
+  filePath: string;
+}
+
+export function getLatestReportByType(type: string): LatestReport | null {
+  if (!fs.existsSync(REPORTS_DIR)) return null;
+
+  const matchingFiles = fs
+    .readdirSync(REPORTS_DIR)
+    .filter((file) => file.endsWith(`-${type}.md`))
+    .sort()
+    .reverse();
+
+  for (const file of matchingFiles) {
+    const match = file.match(/^(\d{4}-\d{2}-\d{2})-(.+)\.md$/);
+    if (!match) continue;
+
+    const [, date, matchedType] = match;
+    const filePath = path.join(REPORTS_DIR, file);
+
+    return {
+      date,
+      type: matchedType,
+      content: fs.readFileSync(filePath, "utf-8"),
+      filePath,
+    };
+  }
+
+  return null;
+}
+
 export function readMarkdownFile(filePath: string): string | null {
   const fullPath = path.join(PROJECT_ROOT, filePath);
   if (!fs.existsSync(fullPath)) return null;
