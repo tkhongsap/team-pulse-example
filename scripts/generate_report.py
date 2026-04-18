@@ -48,13 +48,29 @@ def build_morning_prompt(date: str) -> str:
 1. Read the AM snapshot at `raw/github-daily/{date}-am.md`.
 2. Read `wiki/index.md` to find relevant wiki articles (contributor profiles, patterns, project history). Read the most relevant articles for context.
 3. Read the organizational context at `docs/wt-project.md` (sections 4.1 and 4.2).
-4. Generate the morning briefing report with these sections:
-   - **Top Priorities Today** (3-5 items ranked by urgency with owners and actions)
-   - **Status Board** (each contributor categorized: Backlog / In Progress / Stuck / Ready to Hand Off)
-   - **Review Queue** (PRs needing review, sorted by age)
-   - **Stuck Items Triage** (what's stuck, why, and how to unblock)
-   - **Overnight Activity** (new issues/PRs/comments since last check)
+4. Generate the morning briefing report in this EXACT section order:
+   - **Top-Line Summary** (3-5 bullets max)
+   - **What Changed Since Yesterday**
+   - **Top 3 Unblockers**
+   - **Review Queue** with these subsections: **Urgent Today**, **Review Soon**, **Watchlist**
+   - **Status Board**
+   - **New Overnight Signals**
+   - **Recommended Actions Today**
 5. Save the report to `wiki/reports/{date}-morning-briefing.md`.
+
+## Formatting Requirements
+
+- Optimize for **team leads** and immediate operational action.
+- Keep section order stable and deterministic.
+- Use only these severity labels when you need a priority marker: **critical**, **high**, **medium**, **watch**.
+- Use only these contributor status labels: **Backlog**, **In Progress**, **Stuck**, **Ready to Hand Off**.
+- Every item in **Top 3 Unblockers** must include:
+  - **Owner**
+  - **Next step**
+  - **Due window**
+  - **Why now**
+- Keep prose tight. Prefer tables and short bullets over long narrative paragraphs.
+- Clearly separate **new information from the last 24 hours** from older backlog context.
 
 ## Report Header
 ```
@@ -64,7 +80,7 @@ def build_morning_prompt(date: str) -> str:
 ```
 
 ## Tone
-Direct and actionable. Use names, PR numbers, and specific recommendations. No fluff.
+Direct, specific, and action-first. Use names, PR numbers, and concrete owner/action language. No fluff.
 
 If the AM snapshot doesn't exist for {date}, report that the file is missing and suggest running:
 `python scripts/team_pulse.py --period am --date {date}`
@@ -83,15 +99,27 @@ def build_eod_prompt(date: str) -> str:
 2. Read `wiki/reports/{date}-morning-briefing.md` if it exists (for cross-referencing morning priorities vs evening outcomes).
 3. Read `wiki/index.md` and relevant wiki articles for context.
 4. Read the organizational context at `docs/wt-project.md` (sections 4.1 and 4.3).
-5. Compare the two snapshots and generate the EOD summary with these sections:
-   - **Day at a Glance** (AM vs PM comparison table with deltas)
-   - **Proof of Progress** (verifiable output per contributor per wt-project 4.1)
-   - **What Got Done** (narrative of accomplishments)
-   - **Morning vs Evening Cross-Reference** (if morning briefing exists: priority outcomes table)
-   - **What Didn't Get Done** (items still stuck, PRs that aged)
-   - **Burnout & Workload Signals** (late-night commits, weekend work, overload — per wt-project 4.3)
-   - **Tomorrow's Carry-Over** (items for first thing tomorrow)
+5. Compare the two snapshots and generate the EOD summary in this EXACT section order:
+   - **Top-Line Summary** (3-5 bullets max)
+   - **Morning Commitments vs Actual Outcomes**
+   - **Day at a Glance**
+   - **Resolved Today**
+   - **Newly Stuck Today**
+   - **Proof of Progress**
+   - **Risks & Burnout Signals**
+   - **Carry-Over to Tomorrow**
+   - **Tomorrow's First Moves**
 6. Save the report to `wiki/reports/{date}-eod-summary.md`.
+
+## Formatting Requirements
+
+- Optimize for **team leads** who need a scoreboard and handoff, not a retrospective essay.
+- Keep section order stable and deterministic.
+- Use only these severity labels when needed: **critical**, **high**, **medium**, **watch**.
+- Use only these status labels: **Backlog**, **In Progress**, **Stuck**, **Ready to Hand Off**.
+- Put the comparison of the morning plan vs actual outcomes near the top.
+- Keep **Proof of Progress** concise and evidence-based, ideally as a table or short bullets with links.
+- End with a short, concrete next-step handoff for the next morning briefing.
 
 ## Report Header
 ```
@@ -101,7 +129,7 @@ def build_eod_prompt(date: str) -> str:
 ```
 
 ## Tone
-Factual and evidence-based. Highlight wins but don't hide concerns. Use names, PR numbers, commit counts.
+Factual, concise, and operational. Highlight wins, blockers, and what needs to happen first tomorrow.
 
 If either snapshot is missing, report which file is needed and suggest:
 `python scripts/team_pulse.py --period am|pm --date {date}`
@@ -126,15 +154,31 @@ def build_dashboard_prompt(date: str) -> str:
 3. Read the organizational context at `docs/wt-project.md` (sections 4.2, 4.3, 4.4, and 6).
 4. Check `wiki/reports/` for prior briefings and summaries for context.
 5. Read relevant wiki articles from `wiki/index.md`.
-6. Generate the dashboard with these sections:
-   - **Team Health Score** (1-10 scale with factor breakdown: velocity, stuck ratio, workload balance, review responsiveness, burnout risk)
-   - **Status Distribution** (each contributor categorized per wt-project 4.2)
-   - **Who Needs Help** (stuck contributors, burnout risk, idle, blocked PRs — with actions)
-   - **Key Metrics** (today vs 7-day avg with trends)
-   - **Week-over-Week Trends** (velocity, stuck items, balance)
-   - **Recommendations** (3-5 specific actions for the team lead)
-   - **Success Metrics Tracker** (per wt-project section 6)
+6. Generate the dashboard in this EXACT section order:
+   - **Top-Line Summary** (3-5 bullets max)
+   - **Team Health Score**
+   - **Repo Health Split**
+   - **Top Risks**
+   - **Top Manager Actions**
+   - **Key Metrics vs Targets**
+   - **Needs Help Now**
+   - **Monitor This Week**
+   - **Confidence / Freshness**
+   - **Success Metrics Tracker**
 7. Save the report to `wiki/reports/{date}-team-dashboard.md`.
+
+## Formatting Requirements
+
+- Optimize for **team leads** who need to decide what to do next.
+- Lead with the most actionable information above the fold.
+- Keep section order stable and deterministic.
+- Use only these severity labels when needed: **critical**, **high**, **medium**, **watch**.
+- Use only these status labels: **Backlog**, **In Progress**, **Stuck**, **Ready to Hand Off**.
+- Make the dashboard scan-friendly: prefer concise bullets and tables over long prose.
+- In **Key Metrics vs Targets**, show current value, target, and trend direction where possible.
+- In **Needs Help Now**, include named owners and concrete actions.
+- In **Monitor This Week**, separate watch items from immediate interventions.
+- In **Confidence / Freshness**, explicitly say whether the dashboard is complete, partial, or using fallback/limited data.
 
 ## Report Header
 ```
@@ -144,7 +188,7 @@ def build_dashboard_prompt(date: str) -> str:
 ```
 
 ## Tone
-Executive-level: concise, scannable, decision-oriented. Lead with what needs attention.
+Decision-oriented, crisp, and operational. Lead with what needs intervention now.
 """
 
 

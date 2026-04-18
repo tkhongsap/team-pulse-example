@@ -41,4 +41,37 @@ test.describe("Team Pulse app", () => {
       page.getByRole("heading", { name: "Team Pulse" })
     ).toBeVisible();
   });
+
+  test("report page strips frontmatter and shows metadata summary", async ({
+    page,
+  }) => {
+    await page.goto("/reports/2026-04-16/eod-summary");
+
+    await expect(
+      page.getByText("Parsed from frontmatter instead of rendered in the report body.")
+    ).toBeVisible();
+    await expect(page.getByText("Report metadata")).toBeVisible();
+    await expect(page.locator("body")).not.toContainText(
+      'title: "End-of-Day Summary'
+    );
+    await expect(page.locator("body")).toContainText("End-of-Day Summary — 2026-04-16");
+    await expect(page.locator("body")).toContainText("Report age");
+    await expect(page.locator("body")).toContainText("Source files");
+  });
+
+  test("report API returns parsed metadata and stripped markdown", async ({
+    request,
+  }) => {
+    const response = await request.get("/api/reports/2026-04-16/eod-summary");
+    expect(response.ok()).toBeTruthy();
+
+    const data = await response.json();
+    expect(data.title).toContain("End-of-Day Summary");
+    expect(data.tags).toContain("report");
+    expect(data.sources.length).toBeGreaterThan(0);
+    expect(data.resolvedDate).toBe("2026-04-16");
+    expect(data.isFallback).toBe(false);
+    expect(data.content).toContain("# End-of-Day Summary");
+    expect(data.content).not.toContain('title: "End-of-Day Summary');
+  });
 });

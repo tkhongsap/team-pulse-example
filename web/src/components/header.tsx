@@ -2,17 +2,14 @@
 
 import { ThemeToggle } from "./theme-toggle";
 import { UsageCounter } from "./usage-counter";
+import { formatBangkokCalendarDate } from "@/lib/date";
 
 interface HeaderProps {
   onToggleSidebar: () => void;
 }
 
 export function Header({ onToggleSidebar }: HeaderProps) {
-  const today = new Date().toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
+  const today = formatBangkokCalendarDate();
 
   return (
     <header className="h-14 border-b border-border bg-background flex items-center px-4 shrink-0">
