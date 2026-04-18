@@ -10,12 +10,12 @@ sources:
   - "raw/github-daily/2026-04-14-am.md"
   - "raw/github-daily/2026-04-16-am.md"
 created: 2026-04-11
-updated: 2026-04-16
+updated: 2026-04-17
 ---
 
 # voidborne-d
 
-Most active community contributor across both tracked repos. Expanded from autoresearch (tokenizer/build fixes) to gstack (browse/build fixes) during Apr 13-15. Holds the most open PRs of any contributor (6 total) — all stuck without review.
+Most active community contributor across both tracked repos. Expanded from autoresearch (tokenizer/build fixes) to gstack (browse/build fixes) during Apr 13-15. Holds 6 open PRs across both repos — still all stuck as of Apr 16, but Apr 17 community wave may signal review starting.
 
 ## Key Points
 
@@ -27,7 +27,7 @@ Most active community contributor across both tracked repos. Expanded from autor
 
 ## Status
 
-**Blocked** — Highest-output community contributor but all 6 PRs stuck. Strong candidate for elevated review access per [[connections/sole-maintainer-and-stuck-growth]] recommendations.
+**Blocked → Watching** — Highest-output community contributor with all 6 PRs stuck through Apr 16. Apr 17 shows garrytan returning to community engagement; voidborne-d's gstack PRs (#991, #1003) are 3-4 days old and approaching the 3-day stuck threshold. If garrytan's Apr 17 activity sustains, voidborne-d could be first to be unblocked (strong technical quality, small diffs).
 
 ## Related
 

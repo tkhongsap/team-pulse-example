@@ -3,5 +3,8 @@
 __pycache__/
 *.pyc
 
+# Coverage artifacts
+.coverage
+
 # Ask server session resume tokens (local only)
 outputs/.sessions/
