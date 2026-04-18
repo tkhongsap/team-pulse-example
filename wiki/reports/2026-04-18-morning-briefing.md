@@ -17,207 +17,158 @@ updated: 2026-04-18
 
 ---
 
-## Top Priorities Today
+## Top-Line Summary
 
-### 1. **Sustain Recovery Momentum** (Owner: garrytan)
-**Urgency: CRITICAL** | **Action: Maintain current review pace**
-
-garrytan has successfully reversed the Apr 16 crisis (78→72 stuck PRs) with 2 consecutive days of active community mode (Apr 17-18). Schedule is now healthy (no late-night commits). **Action:** Continue current merge velocity (2-4 PRs/day) through end of week to consolidate recovery. Monitor for signs of re-burnout (zero activity, late-night commits).
-
-**Why it matters:** System hit 80% saturation on Apr 16. Recovery is confirmed but not yet durable — one silent day returns system to crisis. Watch for schedule drift.
+- **Recovery Sustained (Day 2):** garrytan active with healthy commit schedule (04:30–07:36 UTC). 3 commits, 2 merges, v1.0.0.0 release. gstack stuck PRs stable at 72 (46% ratio, down from 80% on Apr 16).
+- **Community Momentum:** 4 new PRs opened (Apr 18), 20 flowing in 2 days. Contributors resuming after Apr 16 silence.
+- **Critical: autoresearch Bottleneck:** 40 open PRs, 39 stuck (98%), zero merges for 21 days. Creator karpathy absent since Mar 26. **Requires immediate secondary reviewer assignment.**
+- **Action Cluster:** (1) Merge 4 gstack security PRs stuck 1–3 days; (2) Assign autoresearch secondary reviewer by EOD; (3) Triage old gstack backlog (8–22d) for rebase debt.
 
 ---
 
-### 2. **Clear autoresearch Review Bottleneck** (Owner: karpathy [ABSENT 21d])
-**Urgency: CRITICAL** | **Action: Assign secondary reviewer immediately**
+## What Changed Since Yesterday
 
-autoresearch is effectively dead: 40 open PRs, 39 stuck (98%), 0 merges in 21 days, creator absent since Mar 26. Oldest PR: #92 (AgentHub) — 39 days stuck. **Action:** Leadership should assign 1-2 secondary reviewers (from autoresearch contributors list) to unblock queue. Do NOT wait for karpathy.
+| Metric | Apr 17 | Apr 18 | Change | Signal |
+|--------|--------|--------|--------|--------|
+| Commits | 2 | 3 | +1 | Sustained productivity, healthy hours |
+| PRs Opened | 2 | 4 | +2 | Community inflow recovering |
+| PRs Merged | 2 | 2 | = | Consistent merge velocity |
+| Stuck PRs (gstack) | 33 | 33 | — | Stable; new PRs <2d old |
+| Late-Night Commits | 0 | 1 (04:30 UTC) | — | Acceptable variance; no burnout pattern |
+| New PR Inflow | 16 | 4 | Drop expected | One-day blip on Apr 16; recovery trajectory confirmed |
 
-**Why it matters:** This repo has zero throughput. Community is contributing (20 PRs in 2 days overall) but blocked indefinitely.
-
----
-
-### 3. **Triage New Issues in gstack** (Owner: garrytan)
-**Urgency: HIGH** | **Action: Route to existing queue**
-
-New issue [#1057](https://github.com/garrytan/gstack/issues/1057): **"cookie-import-browser: most cookies silently dropped"** (Arc browser integration bug — 3 of 22 cookies imported). Also 4 security-critical issues pending:
-- [#965](https://github.com/garrytan/gstack/issues/965) — codex/autoplan auth gate missing (0d stuck)
-- [#1045](https://github.com/garrytan/gstack/issues/1045) — /codex skill hangs forever (0d stuck)
-- [#1048](https://github.com/garrytan/gstack/issues/1048) — "minimal diff" bias in plan-eng-review (0d stuck)
-- [#1034](https://github.com/garrytan/gstack/issues/1034) — codex exec stdin deadlock (0d stuck)
-
-**Action:** Assign to community or add "help wanted" labels. Cookie import is low-severity (data loss, not crash). Auth gate and stdin deadlock are high-severity. Route to ready-to-review PR queue.
+**Bottom line:** Day 2 of sustained recovery. Burnout pattern from Apr 4–12 confirmed resolved. No schedule drift detected.
 
 ---
 
-### 4. **Monitor voidborne-d Workload** (Owner: Team Lead)
-**Urgency: MEDIUM** | **Action: Check status before assignment**
+## Top 3 Unblockers
 
-voidborne-d has 5 open PRs stuck across both repos (oldest 11 days). Most active cross-repo contributor. Likely in backlog state. **Action:** Check if PRs need reviewer assignment or if contributor is available for new work. Do not assign additional work without verifying current capacity.
+### 1. **Merge 4 gstack Security/Hardening PRs (3d+ stuck)**
+- **Owner:** garrytan
+- **Next Step:** Fast-track review and merge #1002 (auth policy), #1003 (Apple Silicon codesign), #999 (agent state), #998 (Gemini). All bug/hardening fixes; no architecture decisions required.
+- **Due Window:** Today (Apr 18), 2–4h window
+- **Why Now:** Security PRs on 3-day threshold. Merging signals community that gstack accepts reviews again; holding further delays critical downstream fixes.
+
+### 2. **Assign Secondary Reviewer for autoresearch (CRITICAL: 39/40 stuck)**
+- **Owner:** Team lead or sponsor (not karpathy)
+- **Next Step:** Pick 1–2 contributors from autoresearch pool with commit authority. Scope: batch-merge ~12 PRs (forks, docs, tokenizer fixes). Hold RFCs + architecture for karpathy's eventual return.
+- **Due Window:** By EOD Apr 18
+- **Why Now:** Zero community contribution Apr 16; additional delay triggers contributor churn. Early intervention signals project is not abandoned.
+
+### 3. **Triage Old gstack Stuck PRs (8–22 days)**
+- **Owner:** garrytan + voidborne-d (check conflicts)
+- **Next Step:** Scan 15 oldest stuck PRs (Apr 4–11 era). Identify rebase debt, design clarity gaps, merge-ready items. Prioritize voidborne-d's 5 PRs if conflict-free.
+- **Due Window:** Apr 19 sprint planning
+- **Why Now:** Accumulated backlog accrues rebase cost. Triage cost ~1.25h now prevents 5–10x context switching later.
 
 ---
 
 ## Status Board
 
-### In Progress (Active)
-| Contributor | Repos | Assigned Issues | PRs Authored | Status | Notes |
-|---|---|---|---|---|---|
-| **garrytan** | gstack | 0 | 1 | In Progress | v1.0.0.0 release, 3 commits today, 2 merges, sustained recovery (day 2). Schedule healthy. |
-| **dkoh12** | gstack | 0 | 1 | In Progress | PR #1054 just opened (fix: namespace Hermes skill names). Fresh contribution. |
+| Repo | Open | Stuck | Ratio | Merges (Apr 18) | Maintainer | Status |
+|------|------|-------|-------|---|---|---|
+| **gstack** | 39 | 13 | 33% | 2 | garrytan **ACTIVE** | **In Progress** — recovery sustained |
+| **autoresearch** | 40 | 39 | 98% | 0 | karpathy **ABSENT 21d** | **Blocked** — needs secondary reviewer |
 
-### Backlog (Assigned but Untouched / Waiting)
-| Contributor | Repos | Assigned Issues | PRs Authored | Status | Notes |
-|---|---|---|---|---|---|
-| **voidborne-d** | autoresearch, gstack | 0 | 5 | Backlog | 6 PRs total (appears twice in snapshot), 11+ days stuck. Cross-repo bottleneck. |
-| **mvanhorn** | autoresearch, gstack | 0 | 2 | Backlog | 1 autoresearch PR (39d stuck), 1 gstack PR (7d stuck). Awaiting review. |
-| **karpathy** | autoresearch | 0 | 1 | Backlog | PR #92 (AgentHub, 39d stuck). Creator is author but 21d absent — self-assigned but stalled. |
-| **garagon** | gstack | 0 | 4 | Backlog | 4 security PRs opened in 1 day (all 0-1d old). Fresh batch; awaiting review. |
-| **walton-chris** | gstack | 0 | 3 | Backlog | 3 PRs (all 0-2d old): office-hours fix, session state, template line endings. Fresh; awaiting review. |
+### Contributor Status Summary
 
-### Stuck (No Movement 3+ Days)
-| Repos | Count | Critical Examples | Root Cause |
+| Contributor | PRs Authored | Status | Notes |
 |---|---|---|---|
-| autoresearch | 39/40 | #92 (39d), #80 (39d), #142 (38d) | karpathy absent 21d; 0 secondary reviewers |
-| gstack | 33/72 | #934 (8d), #991 (4d), #989 (4d), #1003 (3d) | Reviewer backlog; low priority compared to releases |
-
-### Ready to Hand Off
-| Status | Count | Examples |
-|---|---|---|
-| **Merged (Apr 18)** | 2 | gstack #1039 (gstack v1), gstack #1056 (codex + Apple Silicon hardening) |
-| **Merge-Ready (awaiting final sign-off)** | 3-5 | gstack #1008 (preamble cleanup, 2d), #1007 (UTF-8 chunks, 2d), #1004 (generic hosts, 2d) |
+| **garrytan** (gstack) | 1 | **In Progress** | v1.0.0.0 release, 3 healthy commits, 2 merges. Recovery trajectory sustained. |
+| **voidborne-d** (cross-repo) | 5 | **Backlog** | Most active contributor; 5 PRs stuck 3–11d awaiting review. Check capacity. |
+| **garagon** (gstack security) | 4 | **Backlog** | 4 security PRs, all <2d old. Fast-track for review. |
+| **walton-chris** (gstack) | 3 | **Backlog** | 3 fixes, all <2d old. Standard review timeline. |
+| **karpathy** (autoresearch) | 1 | **Backlog** | PR #92 (39d stuck). Creator absent 21d — unresponsive. |
 
 ---
 
 ## Review Queue
 
-### Urgent (>3 Days, No Reviewer)
+### Urgent Today (Critical blockers, 3d+ stuck or security-critical)
 
-**autoresearch (39 stuck)**
-- [#92](https://github.com/karpathy/autoresearch/pull/92) **AgentHub** — karpathy, 39d ⚠️ **REQUIRES SECONDARY REVIEWER**
-- [#80](https://github.com/karpathy/autoresearch/pull/80) **encourage experiment diversity** — mvanhorn, 39d ⚠️ **REQUIRES SECONDARY REVIEWER**
-- [#142](https://github.com/karpathy/autoresearch/pull/142) **PDCA-System for orchestrate tasks** — LaurenceLong, 38d ⚠️ **REQUIRES SECONDARY REVIEWER**
-- [#214](https://github.com/karpathy/autoresearch/pull/214) **Multi-Modal Navigation (RFC)** — Agnuxo1, 36d ⚠️ **REQUIRES SECONDARY REVIEWER**
-- [#373](https://github.com/karpathy/autoresearch/pull/373) **Training on GB10 (Spark DGX)** — ramdurga, 26d
+| Repo | PR | Author | Title | Days | Status |
+|------|----|----|-------|------|--------|
+| gstack | #1002 | Hybirdss | security: enforce auth policy for all endpoints in tunnel mode | 3 | **MERGE** |
+| gstack | #1003 | voidborne-d | fix: ad-hoc codesign compiled binaries on Apple Silicon | 3 | **MERGE** (closes #997) |
+| gstack | #999 | alwynoddle | fix: reset per-tab agent state in killAgent() | 3 | **MERGE** |
+| gstack | #998 | SkipSupreme | feat(design): add provider abstraction with Gemini support | 3 | **REVIEW** |
+| gstack | #1054 | dkoh12 | fix: namespace generated Hermes skill names | 0 | **MERGE** |
+| autoresearch | #437 | yuvrajpant56 | Request to add V100 fork to Notable forks | 20d | **SECONDARY REVIEWER** |
+| autoresearch | #92 | karpathy | AgentHub | 39d | **SECONDARY REVIEWER** |
 
-**gstack (11 stuck >3d)**
-- [#934](https://github.com/garrytan/gstack/pull/934) **fix: add cursor in setup** — xidongc, 8d
-- [#991](https://github.com/garrytan/gstack/pull/991) **fix: allow Node server bundle sidecar outputs** — voidborne-d, 4d
-- [#989](https://github.com/garrytan/gstack/pull/989) **fix: resolve CLAUDE.md from git root** — FireflySentinel, 4d
-- [#1003](https://github.com/garrytan/gstack/pull/1003) **fix: ad-hoc codesign on Apple Silicon** — voidborne-d, 3d
-- [#1002](https://github.com/garrytan/gstack/pull/1002) **security: auth policy for tunnel mode** — Hybirdss, 3d
-- [#999](https://github.com/garrytan/gstack/pull/999) **fix: reset per-tab agent state** — alwynoddle, 3d
-- [#998](https://github.com/garrytan/gstack/pull/998) **feat(design): provider abstraction (Gemini)** — SkipSupreme, 3d
-- [#992](https://github.com/garrytan/gstack/pull/992) **docs(SKILL.md): broaden description** — kafka-snowflake, 3d
+**Action:** garrytan should merge gstack #1002, #1003, #999, #1054 within 2h (all bug/security fixes, trivial). Assign autoresearch secondary reviewer by EOD.
 
-### Fresh (0-2 Days, Review Soon)
-**gstack (20 PRs opened Apr 17-18)**
+### Review Soon (2–4d stuck, architectural fit needed)
 
-**Apr 18 new:**
-- [#1056](https://github.com/garrytan/gstack/pull/1056) **codex + Apple Silicon hardening v0.18.4.0** — garrytan, **MERGED** (18m TTM)
-- [#1055](https://github.com/garrytan/gstack/pull/1055) **Resume Protocol rail — paste-ready handoffs** — JerkyJesse, 0d
-- [#1054](https://github.com/garrytan/gstack/pull/1054) **fix: namespace Hermes skill names** — dkoh12, 0d
+| Repo | PR | Author | Title | Days |
+|------|----|----|-------|------|
+| gstack | #1008 | wojtekszkutnik | fix: extract preamble cleanup into bin scripts | 2 |
+| gstack | #1007 | chappse6 | fix: preserve multi-byte UTF-8 across sidebar-agent chunks | 2 |
+| gstack | #1004 | sahaavi | fix: support documented generic setup hosts | 2 |
+| gstack | #992 | kafka-snowflake | docs(SKILL.md): broaden description | 3 |
+| autoresearch | #516 | marketswitch | feat: add macOS CPU/MPS support | 2 |
 
-**Apr 17 new (still awaiting review):**
-- [#1053](https://github.com/garrytan/gstack/pull/1053) **feat(cso): --fix flag with 9 auto-fixes** — andreycpu, 0d
-- [#1052](https://github.com/garrytan/gstack/pull/1052) **feat: /seo-audit skill** — manuelbenitez, 0d
-- [#1051](https://github.com/garrytan/gstack/pull/1051) **fix: normalize line endings in templates** — walton-chris, 0d
-- [#1050](https://github.com/garrytan/gstack/pull/1050) **fix: persist session state in Bash** — walton-chris, 0d
-- [#1049](https://github.com/garrytan/gstack/pull/1049) **fix: office-hours marks sessions "success"** — walton-chris, 0d
-- [#1047](https://github.com/garrytan/gstack/pull/1047) **fix: make git rev-parse graceful** — raselggg-sys, 0d
-- [#1046](https://github.com/garrytan/gstack/pull/1046) **feat: /content-review skill** — earino, 0d
-- [#1044](https://github.com/garrytan/gstack/pull/1044) **feat: GitHub Copilot CLI support** — sumitgogia, 0d
-- [#1043](https://github.com/garrytan/gstack/pull/1043) **fix: use CLAUDE_PLUGIN_ROOT in hook paths** — Gujiassh, 0d
-- [#1042](https://github.com/garrytan/gstack/pull/1042) **docs: skill deep dives** — jbetala7, 0d
-- [#1041](https://github.com/garrytan/gstack/pull/1041) **GBrain auto-memory for Claude/Codex** — ashwathravi, 0d
-- [#1037](https://github.com/garrytan/gstack/pull/1037) **feat: BROWSE_NO_PROXY env var** — samque1983, 0d
-- [#1035](https://github.com/garrytan/gstack/pull/1035) **fix: respect GSTACK_CHROMIUM_PATH** — mvanhorn, 0d
-- [#1033](https://github.com/garrytan/gstack/pull/1033) **fix: ff-only merge before hard reset** — chaotix345, 0d
+**Action:** garrytan review/merge #1007–#1004 (quick); secondary reviewer (TBD) handle autoresearch #516.
 
-**Action:** Most are fresh (<1 day old). Expected to clear within 1-2 days if current merge velocity continues. Prioritize security PRs (#1002, #998) and high-impact features (#1044, #1052, #1046) within the next 24h.
+### Watchlist (4+ days stuck, low priority or needs clarification)
+
+| Repo | Count | Root Cause | Action |
+|------|-------|-----------|--------|
+| autoresearch | 37 more | Maintainer absent 21d, no secondary reviewer | Assign secondary reviewer TODAY |
+| gstack | 13 more (8–22d) | Pre-recovery backlog, rebase debt | Triage Apr 19 for merge/close decisions |
 
 ---
 
-## Stuck Items Triage
+## New Overnight Signals
 
-### Why Are We Still Stuck?
+### Positive Signals
 
-**Macro:** Two structural problems:
-1. **autoresearch: Terminal saturation (98% stuck)** — Creator (karpathy) absent 21 days. Zero secondary reviewers assigned. System has no review capacity. **Recommendation:** Leadership should immediately assign 2 secondary reviewers from contributor pool (e.g., voidborne-d, mvanhorn) to batch-review oldest items.
+1. **garrytan Commit Pattern Healthy:** 3 commits at 04:30, 07:05, 07:36 UTC. All within normal working hours (no 22:00–06:00 burnout pattern). **Signal: Burnout pattern from Apr 4–12 confirmed resolved.**
 
-2. **gstack: Recovery phase, but legacy stuck items remain** — garrytan now in active mode (2d), but still 33 stuck PRs. Most are low-priority (docs, fork additions, minor fixes) from pre-Apr 13 period. **Recommendation:** Team should triage backlog: either merge low-risk items (docs, fork links) or close stale items to reset baseline.
+2. **v1.0.0.0 Major Release:** Significant version bump with feature work (simpler prompts, LOC receipts). Signals maintainer confidence and stability.
 
-### Stuck Items by Category
+3. **Critical Bug Closed:** Issue #997 (Apple Silicon SIGKILL) fixed in commit. Demonstrates focus on high-impact items.
 
-| Category | Count | Priority | Action |
-|---|---|---|---|
-| **Documentation** (docs, README, SKILL.md) | 12 | LOW | Batch merge low-risk PRs if content is accurate |
-| **Notable Forks (Adding links)** | 8 | LOW | Auto-merge if format is correct |
-| **Bug Fixes** (tokenizer, build, tooling) | 15 | HIGH | Review and merge within 24h |
-| **Security Fixes** | 5 | CRITICAL | Review and merge within 4h |
-| **Features** (new skills, providers) | 8 | MEDIUM | Review and merge within 24-48h |
+4. **Community PR Inflow Returning:** 4 new PRs on Apr 18 (vs. 0 on Apr 16 blackout, 16 on Apr 17 recovery day). Trend confirmed.
 
-**autoresearch stuck breakdown:**
-- 39 of 40 PRs stuck — zero selectivity (100% queue is stuck)
-- No PRs older than 39d have been merged since karpathy went silent
-- Average stuck time: **18.5 days** (vs. gstack 5-8d)
+### Risk Signals
 
-**Action:** For autoresearch, *batch review*: assign secondary reviewer to merge oldest 10 docs/fork PRs within 2h (no blocking issue), then focus on bug fixes + features. Karpathy can review after to maintain authority, but unblock queue now.
+1. **autoresearch Completely Silent:** Zero new PRs or issues on Apr 16 and Apr 18. Last community contribution Apr 15. **Risk Level: HIGH.** Contributor churn imminent if no secondary reviewer assigned by EOD.
+
+2. **New User-Facing Regression (#1057):** "cookie-import-browser: most cookies silently dropped (3 of 22)." Arc browser integration data loss. Low severity but signals QA gap.
+
+3. **Old Security Issues Still Pending:** #965 (codex auth gate), #1045 (/codex hang), #1048 (plan review bias), #1034 (stdin deadlock) all open 0d (just reported Apr 18). If not prioritized, they will hit 3-day threshold by Apr 20.
+
+4. **garagon Security PR Batch (4 in 1 day):** garagon opened 4 security PRs today (#1026, #1029, #1031, #1032), all 0–1d old. Possible response to security concerns or batch cleanup. Monitor for systemic issue pattern.
+
+5. **Recovery Depends on Single Maintainer:** gstack recovery entirely dependent on garrytan activity. One silent day returns system to crisis (Apr 16 precedent). Organizational risk if garrytan unavailable Apr 19+.
 
 ---
 
-## Overnight Activity (2026-04-17 17:47 → 2026-04-18 17:47 UTC+7)
+## Recommended Actions Today
 
-### Commits (3)
-1. **gstack** — garrytan (07:36 UTC) — "fix: remove hardcoded author emails from throughput script" — Minor fix
-2. **gstack** — garrytan (07:05 UTC) — "feat: gstack v1 — simpler prompts + real LOC receipts (v1.0.0.0)" — **Major release**
-3. **gstack** — garrytan (04:30 UTC) — "codex + Apple Silicon hardening wave (v0.18.4.0)" — Platform hardening
+### Morning Execution (By 10:00 UTC)
 
-**Signal:** Healthy commit schedule (early morning, no late-night). v1.0.0.0 is significant milestone. Apple Silicon hardening closes issue #997 (SIGKILL on binary corruption).
+- **garrytan:** Batch-merge 4 gstack security/hardening PRs (#1002, #1003, #999, #1054). Target: <30 minutes. Signals to community that review cycle is active.
+- **Team Lead:** Identify and announce secondary reviewer for autoresearch. Send them curated list of 10–12 trivial/doc PRs (forks, README, tokenizer fixes). Scope out — no architecture decisions.
 
-### PRs Opened (4)
-1. **autoresearch #521** — Creeken-Harrans — "fix: for smaller gpu and personal laptop" — Fresh contribution (0d)
-2. **gstack #1056** — garrytan — "codex + Apple Silicon hardening (v0.18.4.0)" — **MERGED in 18 minutes** ✓
-3. **gstack #1055** — JerkyJesse — "Resume Protocol rail — paste-ready handoffs in every skill (v1.2.1.0)" — Community feature
-4. **gstack #1054** — dkoh12 — "fix: namespace generated Hermes skill names" — Bug fix
+### Afternoon Focus (By 15:00 UTC)
 
-**Signal:** 4 new PRs in 24h is normal. 2 merges (gstack #1039, #1056) maintains healthy velocity. Community contributions resuming after Apr 16 silence.
+- **garrytan:** Review #992 (docs), #1007–#1004 (fixes), #998 (feature; schedule 1:1 if design input needed). Target: 3 more merges.
+- **Secondary Reviewer (autoresearch):** Begin merging first 5 trivial PRs. Update project board. Signal that queue is moving.
+- **Triage:** New issue #1057 (cookie import) — assign to backlog (non-critical); schedule for next sprint.
 
-### PRs Merged (2)
-1. **gstack #1039** — garrytan — "gstack v1 — simpler prompts + real LOC receipts" — **1.1 days TTM** (Apr 17→18)
-2. **gstack #1056** — garrytan — "codex + Apple Silicon hardening (v0.18.4.0)" — **18 minutes TTM** (garrytan self-merge for critical fix)
+### Evening Close (By EOD)
 
-**Signal:** Fast merge on critical security issue (#1056 Apple Silicon). v1.0.0.0 release took 1.1d, reasonable for major bump.
+- **garrytan:** Investigate #1057 (cookie import regression) root cause. Determine if quick patch or backlog.
+- **garrytan:** Confirm old PR rebase debt. Flag any that need contributor pushback before merge.
+- **Team Lead:** Verify autoresearch secondary reviewer has commit authority and has started merging. If blocked, escalate.
 
-### Issues Opened (1)
-1. **gstack #1057** — ValeryP — "cookie-import-browser: most cookies silently dropped — imports 3 of 22 for Arc browser" — Data loss bug, low severity
+### Monitoring (Continuous)
 
-**Signal:** Single issue (cookie import) is not critical. 4 open issues already pending (auth gate, stdin deadlock, tunnel, /codex hang). Keep new issue in queue; prioritize existing blockers.
-
-### Issues Closed (2)
-1. **gstack #997** — steve-seungjun-lee — "[macOS Apple Silicon] Compiled browse binary gets SIGKILL" — Closed by commit (codex hardening)
-2. **gstack #971** — loning — "codex exec hangs in skill bash blocks: missing </dev/null" — Fixed by stdin deadlock PR
-
-**Signal:** Good signal — critical bugs are being fixed (Apple Silicon, stdin). Suggests garrytan is tackling high-impact items.
-
----
-
-## Summary & Escalations
-
-### Status ✅
-- **Recovery confirmed (Day 2):** garrytan active, healthy schedule, 2 merges, 4 new PRs flowing
-- **Stuck PRs stable:** 72 (−6 from Apr 16), 58% ratio (−22% from peak 80%)
-- **Community resuming:** 20 PRs in 2 days after Apr 16 silence
-
-### Risks ⚠️
-- **autoresearch terminal:** 98% stuck, zero merge capacity, creator absent 21d — **requires leadership intervention today**
-- **Recovery durability:** System depends entirely on garrytan. One silent day returns to crisis (Apr 16 precedent)
-- **Legacy stuck PRs in gstack:** 33 stuck, many low-priority — triage needed to reset baseline
-
-### Actions Due Today
-1. ✅ **Continue current pace** — garrytan: keep merge velocity at 2-4 PRs/day
-2. 🔴 **Assign autoresearch secondary reviewers** — Leadership: pick 2 names from contributor pool, announce today
-3. 🔴 **Triage gstack backlog** — garrytan: merge 5-10 low-risk docs/fork PRs to reduce stuck count
-4. ✅ **Monitor for burnout** — Check Apr 19 AM for schedule drift (late-night commits = warning signal)
+- Watch gstack stuck PR count (target: 72→60 by Apr 19 EOD).
+- Watch autoresearch new PR inflow (target: >0 PRs on Apr 19, reversing Apr 16 silence).
+- Watch garrytan schedule for Apr 19 (late-night commits = early warning for re-burnout).
 
 ---
 

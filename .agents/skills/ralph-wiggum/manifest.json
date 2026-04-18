@@ -1,0 +1,31 @@
+{
+  "name": "ralph-wiggum",
+  "description": "Ralph Wiggum loop pattern for autonomous, iterative AI tasks",
+  "version": "1.0.0",
+  "skills": [
+    {
+      "name": "ralph-loop",
+      "description": "Start Ralph Wiggum loop in current session",
+      "file": "ralph-loop.md",
+      "triggers": ["/ralph-loop", "ralph loop", "start ralph"]
+    },
+    {
+      "name": "review-planning-task",
+      "description": "Review a Planning Imperium task against the constitution",
+      "file": "review-planning-task.md",
+      "triggers": ["/review-planning-task", "review planning task", "review imperium task"]
+    },
+    {
+      "name": "cancel-ralph",
+      "description": "Cancel active Ralph Wiggum loop",
+      "file": "cancel-ralph.md",
+      "triggers": ["/cancel-ralph", "cancel ralph", "stop ralph"]
+    },
+    {
+      "name": "help",
+      "description": "Explain Ralph Wiggum technique and available commands",
+      "file": "help.md",
+      "triggers": ["/ralph-help", "ralph help", "what is ralph"]
+    }
+  ]
+}
